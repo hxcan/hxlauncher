@@ -22,7 +22,7 @@
 
 ### Download
 
-- **Google Play**: https://play.google.com/store/apps/details?id=com.stupidbeauty.hxlauncher
+- **Blog**: https://stupidbeauty.com/Blog/article/1929/Block34: A challenging tetris
 
 ### Build from Source
 
@@ -59,7 +59,7 @@ See [LICENSE](LICENSE) file for details.
 
 ### 下载
 
-- **Google Play**: https://play.google.com/store/apps/details?id=com.stupidbeauty.hxlauncher
+- **博客**: https://stupidbeauty.com/Blog/article/1837/HxLauncher: Launch Android applications by voice commands
 
 ### 从源码构建
 
