@@ -710,6 +710,8 @@ public class HxLauncherApplication extends Application implements PackageNameUrl
 		super.onCreate(); //创建超类。
 
 		mInstance = this;
+		// Initialize FileLogger for external storage logging
+		com.stupidbeauty.hxlauncher.utils.FileLogger.init(this);
 
 
 		mContext = getApplicationContext(); //获取应用程序上下文。
