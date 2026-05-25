@@ -78,6 +78,8 @@ import com.stupidbeauty.victoriafresh.VFile;
 import org.apache.commons.io.FileUtils;
 import com.stupidbeauty.hxlauncher.bean.ApplicationLockInformation;
 import com.stupidbeauty.hxlauncher.manager.NotificationDataManager;
+import com.stupidbeauty.crashdetector.CrashHandler;
+
 
 /**
  * 应用程序对象。
@@ -247,7 +249,7 @@ public class HxLauncherApplication extends Application implements PackageNameUrl
   */
   public void setPackageNameExtraPackageNamesMap(HashMap<String, List<String> > packageNameExtraPackageNamesMap)
   {
-    Log.d(TAG, "setPackageNameExtraPackageNamesMap, dance ball result in provided map: " + packageNameExtraPackageNamesMap.get("com.lew.game.danceball.lenovo"));
+    Log.d(TAG, "setPackageNameExtraPackageNamesMap, dance ball result in provided map: " + packageNameExtraPackageNamesMap.get("com.lew/game/danceball/lenovo"));
     if (this.packageNameExtraPackageNamesMap==null)
     {
       this.packageNameExtraPackageNamesMap=packageNameExtraPackageNamesMap;
@@ -257,7 +259,7 @@ public class HxLauncherApplication extends Application implements PackageNameUrl
       this.packageNameExtraPackageNamesMap.putAll(packageNameExtraPackageNamesMap);
     } // else // NOt null
 
-    Log.d(TAG, "setPackageNameExtraPackageNamesMap, dance ball result in final map: " + this.packageNameExtraPackageNamesMap.get("com.lew.game.danceball.lenovo"));
+    Log.d(TAG, "setPackageNameExtraPackageNamesMap, dance ball result in final map: " + this.packageNameExtraPackageNamesMap.get("com.lew/game/danceball/lenovo"));
   } // public void setPackageNameExtraPackageNamesMap(HashMap<String, List<String> > packageNameExtraPackageNamesMap)
 
   /**
@@ -527,6 +529,7 @@ public class HxLauncherApplication extends Application implements PackageNameUrl
       List<String> keys = new ArrayList<>(packageItemLaunchCoolDownMap.keySet());
       
 
+      
 
       
       for(String packageNameItem: keys    )
@@ -712,6 +715,10 @@ public class HxLauncherApplication extends Application implements PackageNameUrl
 		mInstance = this;
 		// Initialize FileLogger for external storage logging
 		com.stupidbeauty.hxlauncher.utils.FileLogger.init(this);
+
+		// Initialize CrashHandler for crash detection and logging
+		CrashHandler.init(this);
+		Log.i(TAG, "✅ android-crash-detector initialized");
 
 
 		mContext = getApplicationContext(); //获取应用程序上下文。
@@ -1077,7 +1084,7 @@ public class HxLauncherApplication extends Application implements PackageNameUrl
 		PackageInfo packageInfo=packageManager.getPackageInfo(packageName,0); //获取对应的软件包信息。
 
 
-			 versionName= packageInfo.versionName; // 获取版本号名字。
+		 versionName= packageInfo.versionName; // 获取版本号名字。
 	}
                 catch (PackageManager.NameNotFoundException e) //未找到该软件包。
 	{
@@ -1480,4 +1487,3 @@ public class HxLauncherApplication extends Application implements PackageNameUrl
 	} //private  File findRandomPhotoFile()
 
 } //public class SimoApp extends Application
-
