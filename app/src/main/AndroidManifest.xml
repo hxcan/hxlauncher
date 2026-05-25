@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:tools="http://schemas.android.com/tools"
+  package="com.stupidbeauty.hxlauncher"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:installLocation="auto" >
+  <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
+  <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+  <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+  <uses-permission android:name="android.permission.INTERNET"/>
+  <uses-permission android:name="android.permission.VIBRATE"/>
+  <uses-permission android:name="android.permission.WAKE_LOCK" />
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+  <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES"/>
+  <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION"/>
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+  <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
+  <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
+  <application
+    android:theme="@style/AppTheme"
+    android:largeHeap="true"
+    android:allowBackup="true"
+    android:icon="@drawable/ic_launcher"
+    android:label="@string/app_name"
+    android:supportsRtl="true"
+    android:name=".application.HxLauncherApplication"
+    android:fullBackupContent="@xml/mybackupscheme"
+    android:networkSecurityConfig="@xml/network_security_zzaqvj"
+    tools:ignore="GoogleAppIndexingWarning">
+    <uses-library android:name="org.apache.http.legacy" android:required="false"/>
+    <activity 
+      android:name="com.stupidbeauty.hxlauncher.LauncherActivity" 
+      android:launchMode="singleInstance" 
+      android:windowSoftInputMode="stateAlwaysHidden"
+      android:theme="@style/AppTheme" 
+      android:exported="true"
+    >
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.HOME"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+      </intent-filter>
+    </activity>
+    <activity 
+      android:name="com.stupidbeauty.hxlauncher.UnLinkActivity" 
+      android:launchMode="singleInstance" 
+      android:windowSoftInputMode="stateAlwaysHidden"
+      android:label="@string/unlink_not_right" 
+      android:exported="true"
+    >
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+    </activity>
+    <activity 
+      android:name="com.stupidbeauty.hxlauncher.activity.FakeLauncherActivity" 
+      android:launchMode="singleInstance"
+      android:windowSoftInputMode="stateAlwaysHidden" 
+      android:enabled="false" 
+      android:exported="true"
+    >
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.HOME"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+      </intent-filter>
+    </activity>
+    <activity
+      android:name="com.stupidbeauty.hxlauncher.activity.PinShortcutConfirmActivity" 
+      android:launchMode="singleInstance"
+      android:windowSoftInputMode="stateAlwaysHidden" 
+      android:exported="true"
+    >
+      <intent-filter>
+        <action android:name="android.content.pm.action.CONFIRM_PIN_SHORTCUT"/>
+      </intent-filter>
+    </activity>
+    <activity 
+      android:name="com.stupidbeauty.hxlauncher.SettingsActivity" 
+      android:label="@string/hxLauncherSettings" 
+      android:exported="true"
+    >
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+    </activity>
+    <activity android:name=".activity.ApplicationInformationActivity" android:theme="@style/AppTheme" android:launchMode="singleInstance" />
+    <activity android:name=".activity.ApplicationUnlockActivity" android:theme="@style/AppTheme" android:launchMode="singleInstance" />
+    <activity android:name=".AutoRunSettingsActivity" android:theme="@android:style/Theme.Holo.Light"/>
+    <activity android:name=".ApplicationFrequencySettingsActivity" android:theme="@android:style/Theme.Holo.Light"/>
+    <activity android:name=".ApplicationAliasSettingsActivity" android:theme="@android:style/Theme.Holo.Light"/>
+    <activity android:name=".activity.AccountActivity" android:label="@string/myAccount" />
+    <receiver 
+      android:name="com.stupidbeauty.shutdownat2100androidnative.BootBroadcastReceiver"
+      android:exported="true"
+    >
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED"/>
+      </intent-filter>
+    </receiver>
+    <service android:name="com.stupidbeauty.hxlauncher.service.DownloadNotificationService" android:exported="true" tools:ignore="ExportedService">
+    </service>
+    <service
+      android:name=".service.ImgBurstTileService"
+      android:exported="true"
+      android:label="@string/app_name"
+      android:icon="@drawable/ic_launcher"
+      android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+      <intent-filter>
+        <action android:name="android.service.quicksettings.action.QS_TILE" />
+      </intent-filter>
+    </service>
+    <service 
+      android:name="com.stupidbeauty.hxlauncher.service.NotificationListernService02" 
+      android:label="@string/notificationListernerService"
+      android:exported="false" 
+      android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+      tools:ignore="ExportedService">
+      <intent-filter>
+        <action android:name="android.service.notification.NotificationListenerService" />
+      </intent-filter>
+      <meta-data
+        android:name="android.service.notification.default_filter_types"
+        android:value="conversations|alerting"
+      >
+      </meta-data>
+      <meta-data
+        android:name="android.service.notification.disabled_filter_types"
+        android:value="ongoing|silent"
+      >
+      </meta-data>
+    </service>
+    <provider
+      android:name="androidx.core.content.FileProvider"
+      android:authorities="${applicationId}.provider"
+      android:exported="false"
+      android:grantUriPermissions="true">
+      <meta-data
+        android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/provider_paths" />
+    </provider>
+  </application>
+</manifest>
