@@ -6,7 +6,7 @@
 
 ## English
 
-**HoxLauncher** (also known as "零桌面" or "笨蛋桌面") is a lightweight Android launcher application.
+**HxLauncher** (also known as "零桌面" or "笨蛋桌面") is a lightweight Android launcher application.
 
 ### Features
 
