@@ -19,38 +19,10 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
     
-    - name: Cache Gradle packages
-      uses: actions/cache@v3
+    - name: Build with Gradle
+      uses: gradle-build-action@v2
       with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
-    
-    - name: Configure Gradle Mirror
-      run: |
-        mkdir -p ~/.gradle
-        echo "distributionBase=GRADLE_USER_HOME
-distributionPath=wrapper/dists
-distributionUrl=https\://mirrors.aliyun.com/gradle/gradle-8.6-bin.zip
-zipStoreBase=GRADLE_USER_HOME
-zipStorePath=wrapper/dists" > ~/.gradle/gradle.properties
-    
-    - name: Grant execute permission to gradlew
-      run: chmod +x gradlew
-    
-    - name: Build with Gradle (with retry, warnings disabled)
-      run: |
-        export GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2048m -Dorg.gradle.daemon=false"
-        ./gradlew build --warning-mode none || ./gradlew build --warning-mode none
-    
-    - name: Assemble Debug APK
-      run: ./gradlew assembleDebug --warning-mode none
-    
-    - name: Assemble Release APK
-      run: ./gradlew assembleRelease --warning-mode none
+        arguments: build assembleDebug assembleRelease --warning-mode none
     
     - name: List APK Files
       run: |
