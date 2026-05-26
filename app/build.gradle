@@ -48,8 +48,8 @@ android
 //     buildToolsVersion = "30.0.3"
     minSdkVersion 21
     targetSdkVersion 33
-    versionCode 15228
-    versionName "15228.2024.10.29"
+    versionCode 15229
+    versionName "15229.2026.5.26"
     multiDexEnabled true
     
 //     generateBuildConfig = true
