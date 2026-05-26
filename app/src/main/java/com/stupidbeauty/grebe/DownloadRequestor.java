@@ -14,6 +14,10 @@ import android.speech.SpeechRecognizer;
 import android.util.Log;
 import android.app.Application;
 import android.os.Looper;
+import android.speech.SpeechRecognizer;
+import android.util.Log;
+import android.app.Application;
+import android.os.Looper;
 import java.util.Timer;
 import java.util.TimerTask;
 import android.Manifest;
@@ -22,6 +26,9 @@ import android.app.Activity;
 import com.stupidbeauty.voiceui.VoiceUi;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageItemInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.content.pm.ShortcutInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ShortcutInfo;
@@ -40,8 +47,16 @@ import com.stupidbeauty.hxlauncher.R;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import com.stupidbeauty.hxlauncher.R;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -60,7 +75,9 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.widget.Toast;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -69,17 +86,20 @@ import com.koushikdutta.async.future.Future;
 import com.koushikdutta.async.future.FutureCallback;
 import com.stupidbeauty.hxlauncher.application.HxLauncherApplication;
 import com.stupidbeauty.hxlauncher.bean.ApplicationListData;
+import com.stupidbeauty.hxlauncher.rpc.CloudRequestorZzaqwb;
 import com.stupidbeauty.hxlauncher.rpc.RecognizerResult;
 
 import org.apache.commons.io.FilenameUtils;
 
-// FileLogger 用于外置存储日志
+import java.io.File;
+
+// FileLogger - 只添加导入，不修改其他代码
 import com.stupidbeauty.hxlauncher.utils.FileLogger;
 
 public class DownloadRequestor
 {
   private Timer timerObj = null; //!< The timer of cancelling download when no progress for a long time.
-  private static final String PACKAGE_INSTALLED_ACTION = "com.example.android.apis.content.SESSION_API_PACKAGE_INSTALLED";
+private static final String PACKAGE_INSTALLED_ACTION = "com.example.android.apis.content.SESSION_API_PACKAGE_INSTALLED";
 
   private Notification continiusNotification=null; //!<记录的通知
   private LauncherActivity launcherActivity=null; //!< 启动活动。
@@ -93,6 +113,7 @@ public class DownloadRequestor
   private NotificationManager mNM;
 
   private static final String TAG="DownloadRequestor"; //!<输出调试信息了时使用的标记
+
 
   private CloudRequestorZzaqwb cloudRequestorZzaqwb=new CloudRequestorZzaqwb(); //!<云端请求发送器
 
@@ -163,10 +184,18 @@ public class DownloadRequestor
   {
     FileLogger.d(TAG, "addApkToInstallSession called, path: " + assetName);
     
+    //!< It's recommended to pass the file size to openWrite(). Otherwise installation may fail
+    //!< if the disk is almost full.
     OutputStream packageInSession = session.openWrite("package", 0, -1);
         
     File apkFileObject=new File(assetName);
             
+//!<     byte[] buffer=FileUtils.readFileToByteArray(apkFileObject);
+//!<             
+//!<     int n=buffer.length;
+//!<             
+//!<     packageInSession.write(buffer, 0, n);
+
     FileUtils.copyFile(apkFileObject, packageInSession); //!< Copy to output stream.
 
     packageInSession.close();
@@ -175,7 +204,7 @@ public class DownloadRequestor
   } //!< private void addApkToInstallSession(String assetName, PackageInstaller.Session session) throws IOException 
 
   /**
-  * 要求安装应用（使用 Session API）
+  * 要求安装应用
   * @param downloadFilePath 应用安装包路径
   */
   private void requestInstallApi(String downloadFilePath)
@@ -184,12 +213,13 @@ public class DownloadRequestor
     
     HxLauncherApplication baseApplication = HxLauncherApplication.getInstance(); //!<获取应用程序对象。
 
+    //!<   https://github.com/aosp-mirror/platform_development/blob/master/samples/ApiDemos/src/com/example/android/apis/content/InstallApkSessionApi.java
+
     PackageInstaller.Session session = null;
     try 
     {
       FileLogger.d(TAG, "Getting PackageInstaller...");
       PackageInstaller packageInstaller = baseApplication.getPackageManager().getPackageInstaller();
-      
       FileLogger.d(TAG, "Creating session params...");
       PackageInstaller.SessionParams params = new PackageInstaller.SessionParams( PackageInstaller.SessionParams.MODE_FULL_INSTALL);
 
@@ -206,17 +236,22 @@ public class DownloadRequestor
       session = packageInstaller.openSession(sessionId);
       FileLogger.d(TAG, "Session opened");
 
+      //!<                     addApkToInstallSession("HelloActivity.apk", session);
       addApkToInstallSession(downloadFilePath, session);
 
       FileLogger.d(TAG, "Creating install status receiver intent...");
+      //!< Create an install status receiver.
+      //!<                     Context context = InstallApkSessionApi.this;
       Intent intent = new Intent(baseApplication, LauncherActivity.class);
       intent.setAction(PACKAGE_INSTALLED_ACTION);
 
       PendingIntent pendingIntent = PendingIntent.getActivity(baseApplication, 0, intent, PendingIntent.FLAG_MUTABLE);
+      //!< PendingIntent contentIntent = PendingIntent.getActivity(this, 0, new Intent(this, LauncherActivity.class), PendingIntent.FLAG_IMMUTABLE);
 
       IntentSender statusReceiver = pendingIntent.getIntentSender();
       FileLogger.d(TAG, "Committing session...");
 
+      //!< Commit the session (this will start the installation workflow).
       session.commit(statusReceiver);
       FileLogger.d(TAG, "Session committed successfully");
       
@@ -225,6 +260,7 @@ public class DownloadRequestor
     }
     catch (IOException e) 
     {
+      //!< throw new RuntimeException("Couldn't install package", e);
       FileLogger.e(TAG, "IOException during installation: " + e.getMessage());
       e.printStackTrace(); //!< Report error.
     }
@@ -235,9 +271,14 @@ public class DownloadRequestor
         session.abandon();
         FileLogger.e(TAG, "Session abandoned due to RuntimeException");
       }
+      //!< throw e;
       e.printStackTrace(); //!< Report error.
       FileLogger.e(TAG, "RuntimeException during installation: " + e.getMessage());
     }
+    //!< catch (IllegalStateException e)
+    //!< {
+    //!<   e.printStackTrace(); //!< Report error.
+    //!< } //!< catch (IllegalStateException e)
 
     String mWordSeparators = baseApplication.getResources().getString(R.string.prepareInstall); //!< 读取 说明 字符串。Prepare install
 
@@ -249,21 +290,33 @@ public class DownloadRequestor
   } //!<private void requestInstall(String downloadFilePath)
 
   /**
-  * 要求安装应用（使用 View 方式）
+  * 要求安装应用
   * @param downloadFilePath 应用安装包路径
   */
   private void requestInstallView(String downloadFilePath)
   {
     FileLogger.d(TAG, "requestInstallView called, path: " + downloadFilePath);
     
+//!<             Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
+//!<             intent.setData(getApkUri("HelloActivity.apk"));
+//!<             intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+//!<             startActivity(intent);
+//!<    
+  
     HxLauncherApplication baseApplication = HxLauncherApplication.getInstance(); //!<获取应用程序对象。
         
     String type = "application/vnd.android.package-archive";
 
     File file=new File(downloadFilePath);
         
+//!<         Intent.ACTION_INSTALL_PACKAGE
     Intent intent = new Intent(Intent.ACTION_VIEW);
+//!<     Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
       
+//!< 1/25/23 18:59android.content.ActivityNotFoundException: No Activity found to handle Intent { act=android.intent.action.INSTALL_PACKAGE dat=file:///storage/emulated/0/Android/data/com.stupidbeauty.hxlauncher/cache/com.cs_credit_bank.apk typ=application/vnd.android.package-archive flg=0x10000000 }
+
+//!<       04-01 16:12:41.051 19837 19837 E AndroidRuntime: android.content.ActivityNotFoundException: No Activity found to handle Intent { act=android.intent.action.VIEW dat=file:///storage/emulated/0/Android/data/com.stupidbeauty.hxlauncher/files/Download/5F1E59D37ED5FCA5542C7EB86977A9D4.apk typ=application/vnd.android.package-archive flg=0x10000000 }
+
     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) 
@@ -282,6 +335,8 @@ public class DownloadRequestor
       }
       catch(IllegalArgumentException e)
       {
+//!<       4/3/22 17:22java.lang.IllegalArgumentException: Failed to find configured root that contains /storage/emulated/0/download/b75da43000c64716bd5a688e65bfb370.apk
+
         e.printStackTrace();
         FileLogger.d(TAG, "IllegalArgumentException with FileProvider, falling back to Uri.fromFile");
         
@@ -313,6 +368,10 @@ public class DownloadRequestor
     HxLauncherApplication baseApplication = HxLauncherApplication.getInstance(); //!<获取应用程序对象。
     
     voiceUi=new VoiceUi(baseApplication); //!< 创建语音交互对象。
+
+
+//!<       04-01 08:46:40.772  3082  5366 W DownloadManager: [3203] Stop requested with status INSUFFICIENT_SPACE_ERROR: Failed to allocate 78744689 because only 60489728 allocatable
+//!< 04-01 08:46:40.772  3082  5366 D DownloadManager: [3203] Finished with status INSUFFICIENT_SPACE_ERROR
 
     cloudRequestorZzaqwb.setContext(baseApplication); //!<设置上下文
       
@@ -367,6 +426,7 @@ public class DownloadRequestor
 
 		//!< The PendingIntent to launch our activity if the user selects this notification
 		PendingIntent contentIntent = PendingIntent.getActivity(baseApplication, 0, new Intent(baseApplication, LauncherActivity.class), PendingIntent.FLAG_MUTABLE);
+    //!< PendingIntent pendingIntent = PendingIntent.getActivity(baseApplication, 0, intent, PendingIntent.FLAG_MUTABLE);
 
 		String downloadingText="Downloading " + contentText; //!< 构造字符串，正在下载。陈欣。
 
@@ -461,16 +521,16 @@ public class DownloadRequestor
         
       if (apkFile.exists()) //!< 文件存在。
       {
-        boolean isApkFile=checkIsApkFile(apkFilePath); //!< 检查是不是 APK 文件。
+        boolean isApkFile=checkIsApkFile(apkFilePath); //!< 检查是不是APK文件。
         FileLogger.d(TAG, "APK file exists, isApkFile: " + isApkFile);
       
         //!< 检查是否是有效的安装包文件：
-        if (isApkFile) //!< 是 APK 文件
+        if (isApkFile) //!< 是APK文件
         {
           FileLogger.d(TAG, "APK file is valid, requesting install");
           requestInstall(apkFilePath); //!< 要求安装。
-        } //!< if (isApkFile) //!< 是 APK 文件
-        else //!<不是 APK 文件。
+        } //!< if (isApkFile) //!< 是APK文件
+        else //!<不是APK文件。
         {
           shouldDownload=true; //!< 应当下载。
           FileLogger.d(TAG, "APK file is not valid, will download again");
@@ -491,9 +551,10 @@ public class DownloadRequestor
     if (shouldDownload) //!< Should download.
     {
       Log.d(TAG, "requestDownloadUrl, 347, download file path: " + uri); //!<debug.
-      FileLogger.d(TAG, "URL scheme: " + uri.getScheme());
 
       ApplicationListData applicationListData = baseApplication.getApplicationListData(); //!<获取本地服务器列表数据对象。
+
+      //!< Toast.makeText(baseApplication, "Download Started " + applicationName, Toast.LENGTH_SHORT).show();
 
       fullUrl = uri.toString();
 
@@ -506,6 +567,9 @@ public class DownloadRequestor
       {
         applicationListData.addUrl(fullUrl); //!<记录，已经请求下载这个网址。
 
+        Log.d(TAG, "requestDownloadUrl, url scheme: " + uri.getScheme()); //!<debug.
+        FileLogger.d(TAG, "URL scheme: " + uri.getScheme());
+        
         String mWordSeparators = baseApplication.getResources().getString(R.string.startDownload); //!< 读取 说明 字符串。
     
         voiceUi.say(mWordSeparators); //!< 说话，需要解锁。
@@ -516,7 +580,7 @@ public class DownloadRequestor
   } //!< public void requestDownloadUrl(Uri uri, String refererUrl, String applicationName, String packageName)
 
   /**
-  * 检查是不是 APK 文件。
+  * 检查是不是APK文件。
   */
   private boolean checkIsApkFile(String apkFilePath) 
   {
@@ -549,10 +613,6 @@ public class DownloadRequestor
           result=true; //!< It is apk file.
           FileLogger.d(TAG, "No package name provided, accepting APK");
         } //!< if (packageName==null) //!< No package name provided
-        else
-        {
-          FileLogger.d(TAG, "Version name mismatch: " + versionName + " vs " + expectedVersionName);
-        }
       } //!< else //!< Version name not equal
     }
     else
@@ -569,7 +629,7 @@ public class DownloadRequestor
   */
   private void downloadByIon(Uri uri)
   {
-    String targetUrl=uri.toString(); //!<获取目标 URL。
+    String targetUrl=uri.toString(); //!<获取目标URL。
 
     HxLauncherApplication baseApplication = HxLauncherApplication.getInstance(); //!<获取应用程序对象。
 
@@ -582,7 +642,9 @@ public class DownloadRequestor
         
     Context context = HxLauncherApplication.getAppContext();
 
+//!<     File downloadFolder = baseApplication.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
     File downloadFolder = baseApplication.getExternalCacheDir();
+//!<     File downloadFolder = context.getCacheDir();
 
     String wholePath =downloadFolder.getPath()+ File.separator  + fileName;
     
@@ -592,6 +654,9 @@ public class DownloadRequestor
     fileDownloadFuture= Ion.with(baseApplication)
       .load(targetUrl)
       .setTimeout(15000) //!<Set the time out to be 15s.
+      //!< have a ProgressBar get updated automatically with the percent
+      //!<                .progressBar(ionprogressBar1)
+      //!< can also use a custom callback
       .progress(new ProgressCallback() 
       {
         @Override
