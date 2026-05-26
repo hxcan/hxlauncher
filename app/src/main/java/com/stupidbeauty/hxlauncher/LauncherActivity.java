@@ -277,7 +277,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
       if (mAdapter!=null)
       {
           mAdapter.toggleBuiltinShortcutsVisible(builtinShortcutsVisible); //切换，内置快捷方式是否可见。
-      } ////!< 内置 快捷方式是否可见。
+      } ///!< 内置 快捷方式是否可见。
   } //public void setBuiltinShortcutsVisible (boolean builtinShortcutsVisible)
     
   /**
@@ -290,7 +290,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
       if (mAdapter!=null)
       {
           applyArticleInfoArrayList(); // 应用应用程序信息列表。
-      } ////!< 应用程序信息列表。
+      } ///!< 应用程序信息列表。
   } //public void setArticleInfoArrayList (ArrayList<ArticleInfo> articleInfoArrayList )
     
     public void setShortcutInfos(List<ShortcutInfo> shortcutInfos)
@@ -809,7 +809,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
     assessInitializeMsc(); // 考虑要不要初始化讯飞语音识别。
     Log.w(TAG, "onCreate, 789, timestamp: " + System.currentTimeMillis()); //Debug.
 
-    initLocalLogUtil(); //初始化本地日志工具。
+    // initLocalLogUtil(); //初始化本地日志工具。【已移除：旧崩溃检测器】
     Log.w(TAG, "onCreate, 791, timestamp: " + System.currentTimeMillis()); //Debug.
 
     scheduleStartBuiltinFtpServer(); // 计划启动内置 FTP 服务器。
@@ -1968,7 +1968,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
     } //private void checkErrorCode(int errorCode)
 
     /**
-     * 启动友军“21点关机”的服务。
+     * 启动友军"21点关机"的服务。
      */
     protected void startFriendShutDownAt2100Service()
     {
@@ -3570,4 +3570,3 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
       } //if (voiceRecognizeResultString!=null) //有识别结果。
     } //private void rememberVoicePackageNameRelationship(String answerValue)
 }
-
