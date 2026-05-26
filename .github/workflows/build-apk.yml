@@ -36,6 +36,22 @@ jobs:
         export GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2048m -Dorg.gradle.daemon=false"
         ./gradlew assembleDebug assembleRelease --warning-mode none
     
+    - name: Install Build Tools via SDK Manager
+      run: |
+        export ANDROID_HOME=/usr/local/lib/android/sdk
+        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/tools/bin
+        yes | sdkmanager "build-tools;29.0.3"
+    
+    - name: Sign Release APK
+      id: sign_release
+      uses: r0adkll/sign-android-release@v1
+      with:
+        releaseDirectory: app/build/outputs/apk/release
+        signingKeyBase64: ${{ secrets.APK_KEY_STORE }}
+        alias: ${{ secrets.KEYSTORE_ALIAS }}
+        keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+        keyPassword: ${{ secrets.KEY_STORE_PASSWORD }}
+    
     - name: Create CI Release (master push)
       if: github.event_name == 'push' && github.ref == 'refs/heads/master'
       uses: softprops/action-gh-release@v1
@@ -44,7 +60,7 @@ jobs:
         name: 🤖 CI Build #${{ github.run_number }}
         files: |
           app/build/outputs/apk/debug/*.apk
-          app/build/outputs/apk/release/*.apk
+          ${{ steps.sign_release.outputs.signedReleaseFile }}
         prerelease: true
         generate_release_notes: true
         token: ${{ secrets.GITHUB_TOKEN }}
@@ -57,7 +73,9 @@ jobs:
           ---
           ### 📦 下载
           - **Debug 版**: `hxlauncher-debug-*.apk`
-          - **Release 版**: `hxlauncher-release-*.apk`
+          - **Release 版**: `hxlauncher-release-signed-*.apk` (已签名)
+          
+          ⚠️ Release 版本已签名，支持覆盖安装和正式分发。
     
     - name: Upload Debug APK (PR)
       if: github.event_name == 'pull_request'
@@ -66,9 +84,9 @@ jobs:
         name: hxlauncher-debug
         path: app/build/outputs/apk/debug/*.apk
     
-    - name: Upload Release APK (PR)
+    - name: Upload Signed Release APK (PR)
       if: github.event_name == 'pull_request'
       uses: actions/upload-artifact@v4
       with:
-        name: hxlauncher-release
-        path: app/build/outputs/apk/release/*.apk
+        name: hxlauncher-release-signed
+        path: ${{ steps.sign_release.outputs.signedReleaseFile }}
