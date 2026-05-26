@@ -30,8 +30,7 @@ jobs:
           ${{ runner.os }}-gradle-
     
     - name: Build with Gradle
-      run: |
-        .\gradlew.bat assembleDebug assembleRelease --warning-mode none
+      run: .\gradlew.bat assembleDebug assembleRelease --warning-mode none
     
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
