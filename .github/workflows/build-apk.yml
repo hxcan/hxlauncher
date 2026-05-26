@@ -53,17 +53,11 @@ jobs:
           
           **构建编号:** ${{ github.run_number }}
           **提交:** ${{ github.sha }}
-          **时间:** ${{ github.event.head_commit.timestamp }}
           
           ---
           ### 📦 下载
-          - **Debug 版**: `hxlauncher-debug-*.apk` (自动签名，仅供测试)
-          - **Release 版**: `hxlauncher-release-*.apk` (正式签名，可覆盖安装)
-          
-          ⚠️ Release 版本使用正式证书签名，支持覆盖安装和正式分发。
-          
-          ### 🔗 下载方式
-          点击上方的文件即可下载，**无需登录**。
+          - **Debug 版**: `hxlauncher-debug-*.apk`
+          - **Release 版**: `hxlauncher-release-*.apk`
     
     - name: Upload Debug APK (PR)
       if: github.event_name == 'pull_request'
