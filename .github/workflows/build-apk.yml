@@ -52,6 +52,28 @@ jobs:
         keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
         keyPassword: ${{ secrets.KEY_STORE_PASSWORD }}
     
+    - name: Rename APK files with version info
+      run: |
+        # 获取版本信息
+        VERSION_NAME=$(grep -oP 'versionName\s*"\K[^"]+' app/build.gradle)
+        VERSION_CODE=$(grep -oP 'versionCode\s*\K[0-9]+' app/build.gradle)
+        BUILD_TIME=$(date +%Y%m%d-%H%M%S)
+        
+        # 重命名 Debug APK
+        DEBUG_APK=$(ls app/build/outputs/apk/debug/*.apk | head -1)
+        if [ -n "$DEBUG_APK" ]; then
+          mv "$DEBUG_APK" "app/build/outputs/apk/debug/hxlauncher-debug-v${VERSION_NAME}-${VERSION_CODE}-${BUILD_TIME}.apk"
+        fi
+        
+        # 重命名 Release APK
+        RELEASE_APK=$(ls app/build/outputs/apk/release/*-signed.apk | head -1)
+        if [ -n "$RELEASE_APK" ]; then
+          mv "$RELEASE_APK" "app/build/outputs/apk/release/hxlauncher-release-signed-v${VERSION_NAME}-${VERSION_CODE}-${BUILD_TIME}.apk"
+        fi
+        
+        echo "Debug APK: hxlauncher-debug-v${VERSION_NAME}-${VERSION_CODE}-${BUILD_TIME}.apk"
+        echo "Release APK: hxlauncher-release-signed-v${VERSION_NAME}-${VERSION_CODE}-${BUILD_TIME}.apk"
+    
     - name: Create CI Release (master push)
       if: github.event_name == 'push' && github.ref == 'refs/heads/master'
       uses: softprops/action-gh-release@v1
@@ -60,7 +82,7 @@ jobs:
         name: 🤖 CI Build #${{ github.run_number }}
         files: |
           app/build/outputs/apk/debug/*.apk
-          ${{ steps.sign_release.outputs.signedReleaseFile }}
+          app/build/outputs/apk/release/*-signed.apk
         prerelease: true
         generate_release_notes: true
         token: ${{ secrets.GITHUB_TOKEN }}
@@ -72,8 +94,8 @@ jobs:
           
           ---
           ### 📦 下载
-          - **Debug 版**: `hxlauncher-debug-*.apk`
-          - **Release 版**: `hxlauncher-release-signed-*.apk` (已签名)
+          - **Debug 版**: `hxlauncher-debug-v*.apk`
+          - **Release 版**: `hxlauncher-release-signed-v*.apk` (已签名)
           
           ⚠️ Release 版本已签名，支持覆盖安装和正式分发。
     
@@ -89,4 +111,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: hxlauncher-release-signed
-        path: ${{ steps.sign_release.outputs.signedReleaseFile }}
+        path: app/build/outputs/apk/release/*-signed.apk
