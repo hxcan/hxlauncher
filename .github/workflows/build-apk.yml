@@ -1,5 +1,4 @@
 name: Build APK
-
 on:
   push:
     branches: [ master, develop ]
@@ -37,13 +36,44 @@ jobs:
         export GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2048m -Dorg.gradle.daemon=false"
         ./gradlew assembleDebug assembleRelease --warning-mode none
     
-    - name: Upload Debug APK
+    - name: Create CI Release (master push)
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ci/auto-build-${{ github.run_number }}
+        name: 🤖 CI Build #${{ github.run_number }}
+        files: |
+          app/build/outputs/apk/debug/*.apk
+          app/build/outputs/apk/release/*.apk
+        prerelease: true
+        generate_release_notes: true
+        token: ${{ secrets.GITHUB_TOKEN }}
+        body: |
+          ## 🤖 自动构建版本
+          
+          **构建编号:** ${{ github.run_number }}
+          **提交:** ${{ github.sha }}
+          **时间:** ${{ github.event.head_commit.timestamp }}
+          
+          ---
+          ### 📦 下载
+          - **Debug 版**: `hxlauncher-debug-*.apk` (自动签名，仅供测试)
+          - **Release 版**: `hxlauncher-release-*.apk` (正式签名，可覆盖安装)
+          
+          ⚠️ Release 版本使用正式证书签名，支持覆盖安装和正式分发。
+          
+          ### 🔗 下载方式
+          点击上方的文件即可下载，**无需登录**。
+    
+    - name: Upload Debug APK (PR)
+      if: github.event_name == 'pull_request'
       uses: actions/upload-artifact@v4
       with:
         name: hxlauncher-debug
         path: app/build/outputs/apk/debug/*.apk
     
-    - name: Upload Release APK
+    - name: Upload Release APK (PR)
+      if: github.event_name == 'pull_request'
       uses: actions/upload-artifact@v4
       with:
         name: hxlauncher-release
