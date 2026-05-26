@@ -40,11 +40,7 @@ import com.stupidbeauty.hxlauncher.R;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileWriter;
-import java.io.PrintWriter;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
+import java.io.IOException;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -77,6 +73,9 @@ import com.stupidbeauty.hxlauncher.rpc.RecognizerResult;
 
 import org.apache.commons.io.FilenameUtils;
 
+// FileLogger 用于外置存储日志
+import com.stupidbeauty.hxlauncher.utils.FileLogger;
+
 public class DownloadRequestor
 {
   private Timer timerObj = null; //!< The timer of cancelling download when no progress for a long time.
@@ -100,36 +99,6 @@ public class DownloadRequestor
   private long downloadId; //!<当前的下载编号
 
   /**
-  * 写入日志到外置存储。
-  * @param message 日志消息
-  */
-  private void writeLog(String message)
-  {
-    try
-    {
-      File logDir = new File(Environment.getExternalStorageDirectory(), "Android/data/com.stupidbeauty.hxlauncher/files/logs");
-      if (!logDir.exists())
-      {
-        logDir.mkdirs();
-      }
-
-      SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.getDefault());
-      String timestamp = sdf.format(new Date());
-      File logFile = new File(logDir, "install_" + timestamp + ".log");
-
-      PrintWriter writer = new PrintWriter(new FileWriter(logFile, true));
-      writer.println("[" + timestamp + "] " + message);
-      writer.close();
-
-      Log.d(TAG, "writeLog: " + message);
-    }
-    catch (Exception e)
-    {
-      Log.e(TAG, "writeLog failed", e);
-    }
-  }
-
-  /**
   * 记录安装包路径。
   */
   private void  rememberApkFile(String apkFilePath) 
@@ -141,7 +110,7 @@ public class DownloadRequestor
       HashMap<String, String> apkFilePathMap=baseApplication.getApkFilePathMap(); //!< 获取 APK 安装包路径映射。
             
       Log.d(TAG, "rememberApkFile, package name: " + packageName + ", apk file path: " + apkFilePath); //!< Debug.
-      writeLog("rememberApkFile, package name: " + packageName + ", apk file path: " + apkFilePath);
+      FileLogger.d(TAG, "rememberApkFile, package name: " + packageName + ", apk file path: " + apkFilePath);
             
       apkFilePathMap.put(packageName, apkFilePath); //!< 加入映射中。
             
@@ -167,7 +136,7 @@ public class DownloadRequestor
   */
   private void requestInstall(String downloadFilePath)
   {
-    writeLog("requestInstall called, path: " + downloadFilePath);
+    FileLogger.d(TAG, "requestInstall called, path: " + downloadFilePath);
     notifyDownloadFinished(); //!< Notify download finished.
     requestInstallApi(downloadFilePath); //!< Request install by view.
   } //!<private void requestInstall(String downloadFilePath)
@@ -192,7 +161,7 @@ public class DownloadRequestor
   
   private void addApkToInstallSession(String assetName, PackageInstaller.Session session) throws IOException 
   {
-    writeLog("addApkToInstallSession called, path: " + assetName);
+    FileLogger.d(TAG, "addApkToInstallSession called, path: " + assetName);
     
     OutputStream packageInSession = session.openWrite("package", 0, -1);
         
@@ -202,7 +171,7 @@ public class DownloadRequestor
 
     packageInSession.close();
     
-    writeLog("addApkToInstallSession completed");
+    FileLogger.d(TAG, "addApkToInstallSession completed");
   } //!< private void addApkToInstallSession(String assetName, PackageInstaller.Session session) throws IOException 
 
   /**
@@ -211,52 +180,52 @@ public class DownloadRequestor
   */
   private void requestInstallApi(String downloadFilePath)
   {
-    writeLog("requestInstallApi called, path: " + downloadFilePath);
+    FileLogger.d(TAG, "requestInstallApi called, path: " + downloadFilePath);
     
     HxLauncherApplication baseApplication = HxLauncherApplication.getInstance(); //!<获取应用程序对象。
 
     PackageInstaller.Session session = null;
     try 
     {
-      writeLog("Getting PackageInstaller...");
+      FileLogger.d(TAG, "Getting PackageInstaller...");
       PackageInstaller packageInstaller = baseApplication.getPackageManager().getPackageInstaller();
       
-      writeLog("Creating session params...");
+      FileLogger.d(TAG, "Creating session params...");
       PackageInstaller.SessionParams params = new PackageInstaller.SessionParams( PackageInstaller.SessionParams.MODE_FULL_INSTALL);
 
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) //!< USER_ACTION_NOT_REQUIRED
       {
-        writeLog("Setting USER_ACTION_NOT_REQUIRED for Android S+");
+        FileLogger.d(TAG, "Setting USER_ACTION_NOT_REQUIRED for Android S+");
         params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED); //!< Silent update.
       } //!<if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) //!<动态权限
 
-      writeLog("Creating session...");
+      FileLogger.d(TAG, "Creating session...");
       int sessionId = packageInstaller.createSession(params);
-      writeLog("Session created with id: " + sessionId);
+      FileLogger.d(TAG, "Session created with id: " + sessionId);
       
       session = packageInstaller.openSession(sessionId);
-      writeLog("Session opened");
+      FileLogger.d(TAG, "Session opened");
 
       addApkToInstallSession(downloadFilePath, session);
 
-      writeLog("Creating install status receiver intent...");
+      FileLogger.d(TAG, "Creating install status receiver intent...");
       Intent intent = new Intent(baseApplication, LauncherActivity.class);
       intent.setAction(PACKAGE_INSTALLED_ACTION);
 
       PendingIntent pendingIntent = PendingIntent.getActivity(baseApplication, 0, intent, PendingIntent.FLAG_MUTABLE);
 
       IntentSender statusReceiver = pendingIntent.getIntentSender();
-      writeLog("Committing session...");
+      FileLogger.d(TAG, "Committing session...");
 
       session.commit(statusReceiver);
-      writeLog("Session committed successfully");
+      FileLogger.d(TAG, "Session committed successfully");
       
       session.close(); //!< Finish the sesison.
-      writeLog("Session closed");
+      FileLogger.d(TAG, "Session closed");
     }
     catch (IOException e) 
     {
-      writeLog("IOException during installation: " + e.getMessage());
+      FileLogger.e(TAG, "IOException during installation: " + e.getMessage());
       e.printStackTrace(); //!< Report error.
     }
     catch (RuntimeException e) 
@@ -264,10 +233,10 @@ public class DownloadRequestor
       if (session != null) 
       {
         session.abandon();
-        writeLog("Session abandoned due to RuntimeException");
+        FileLogger.e(TAG, "Session abandoned due to RuntimeException");
       }
       e.printStackTrace(); //!< Report error.
-      writeLog("RuntimeException during installation: " + e.getMessage());
+      FileLogger.e(TAG, "RuntimeException during installation: " + e.getMessage());
     }
 
     String mWordSeparators = baseApplication.getResources().getString(R.string.prepareInstall); //!< 读取 说明 字符串。Prepare install
@@ -276,7 +245,7 @@ public class DownloadRequestor
 
     stopDownloadNotificationService(); //!< 停止，下载通知服务。
     
-    writeLog("requestInstallApi completed");
+    FileLogger.d(TAG, "requestInstallApi completed");
   } //!<private void requestInstall(String downloadFilePath)
 
   /**
@@ -285,7 +254,7 @@ public class DownloadRequestor
   */
   private void requestInstallView(String downloadFilePath)
   {
-    writeLog("requestInstallView called, path: " + downloadFilePath);
+    FileLogger.d(TAG, "requestInstallView called, path: " + downloadFilePath);
     
     HxLauncherApplication baseApplication = HxLauncherApplication.getInstance(); //!<获取应用程序对象。
         
@@ -309,12 +278,12 @@ public class DownloadRequestor
         intent.setDataAndType(downloadedApk, type);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         
-        writeLog("Using FileProvider URI: " + downloadedApk);
+        FileLogger.d(TAG, "Using FileProvider URI: " + downloadedApk);
       }
       catch(IllegalArgumentException e)
       {
         e.printStackTrace();
-        writeLog("IllegalArgumentException with FileProvider, falling back to Uri.fromFile");
+        FileLogger.d(TAG, "IllegalArgumentException with FileProvider, falling back to Uri.fromFile");
         
         intent.setDataAndType(Uri.fromFile(file), type);
       } //!< catch(IllegalArgumentException e)
@@ -322,11 +291,11 @@ public class DownloadRequestor
     else 
     {
       intent.setDataAndType(Uri.fromFile(file), type);
-      writeLog("Using Uri.fromFile for Android < N");
+      FileLogger.d(TAG, "Using Uri.fromFile for Android < N");
     }
 
     Log.d(TAG, "requestInstall, starting activity to install apk"); //!< Debug.
-    writeLog("Starting install activity");
+    FileLogger.d(TAG, "Starting install activity");
 
     String mWordSeparators = baseApplication.getResources().getString(R.string.prepareInstall); //!< 读取 说明 字符串。Prepare install
 
@@ -336,7 +305,7 @@ public class DownloadRequestor
         
     stopDownloadNotificationService(); //!< 停止，下载通知服务。
     
-    writeLog("requestInstallView completed");
+    FileLogger.d(TAG, "requestInstallView completed");
   } //!<private void requestInstall(String downloadFilePath)
 
   public DownloadRequestor() 
@@ -370,14 +339,14 @@ public class DownloadRequestor
             if (localCursor.getInt(localCursor.getColumnIndex(DownloadManager.COLUMN_REASON)) == DownloadManager.ERROR_INSUFFICIENT_SPACE)
             {
               Log.w("DownloadStatus", " Download failed with ERROR_INSUFFICIENT_SPACE");
-              writeLog("Download failed with ERROR_INSUFFICIENT_SPACE");
+              FileLogger.w(TAG, "Download failed with ERROR_INSUFFICIENT_SPACE");
                                     
               long currentId=localCursor.getLong(localCursor.getColumnIndex(DownloadManager.COLUMN_ID)); //!< 获取当前这条记录的编号。
               //!< 陈欣
 
               if (currentId==downloadId) //!< 正是我们想要下载的编号
               {
-                writeLog("Download failed for our downloadId: " + downloadId);
+                FileLogger.d(TAG, "Download failed for our downloadId: " + downloadId);
                 notifyDownloadFail(); //!< 通知下载失败。
               } //!< if (currentId==downloadId) //!< 正是我们想要下载的编号
             }
@@ -387,7 +356,7 @@ public class DownloadRequestor
       }
     });
     
-    writeLog("DownloadRequestor initialized");
+    FileLogger.d(TAG, "DownloadRequestor initialized");
   } //!< public DownloadRequestor() 
 
   private void showNotification(String contentText)
@@ -449,7 +418,7 @@ public class DownloadRequestor
   */
   private void  notifyDownloadFail() 
   {
-    writeLog("notifyDownloadFail called");
+    FileLogger.d(TAG, "notifyDownloadFail called");
     
     HxLauncherApplication baseApplication = HxLauncherApplication.getInstance(); //!<获取应用程序对象。
     ApplicationListData applicationListData = baseApplication.getApplicationListData(); //!<获取本地服务器列表数据对象。
@@ -473,7 +442,7 @@ public class DownloadRequestor
   */
   public void requestDownloadUrl(Uri uri, String refererUrl, String applicationName, String packageName)
   {
-    writeLog("requestDownloadUrl called, uri: " + uri + ", package: " + packageName);
+    FileLogger.d(TAG, "requestDownloadUrl called, uri: " + uri + ", package: " + packageName);
     
     HxLauncherApplication baseApplication = HxLauncherApplication.getInstance(); //!<获取应用程序对象。
 
@@ -481,8 +450,8 @@ public class DownloadRequestor
 
     String apkFilePath=apkFilePathMap.get(packageName); //!< 获取安装包文件路径。
         
-    Log.d(TAG, "requestDownloadUrl, apkFilePath: " + apkFilePath + ", package name: " + packageName+ ", map length: " + apkFilePathMap.length()); //!< Debug.
-    writeLog("requestDownloadUrl, apkFilePath: " + apkFilePath + ", package name: " + packageName);
+    Log.d(TAG, "requestDownloadUrl, apkFilePath: " + apkFilePath + ", package name: " + packageName+ ", map length: " + apkFilePathMap.size()); //!< Debug.
+    FileLogger.d(TAG, "requestDownloadUrl, apkFilePath: " + apkFilePath + ", package name: " + packageName);
         
     boolean shouldDownload=false; //!< 是否应当下载。
         
@@ -493,35 +462,36 @@ public class DownloadRequestor
       if (apkFile.exists()) //!< 文件存在。
       {
         boolean isApkFile=checkIsApkFile(apkFilePath); //!< 检查是不是 APK 文件。
-        writeLog("APK file exists, isApkFile: " + isApkFile);
+        FileLogger.d(TAG, "APK file exists, isApkFile: " + isApkFile);
       
         //!< 检查是否是有效的安装包文件：
         if (isApkFile) //!< 是 APK 文件
         {
-          writeLog("APK file is valid, requesting install");
+          FileLogger.d(TAG, "APK file is valid, requesting install");
           requestInstall(apkFilePath); //!< 要求安装。
         } //!< if (isApkFile) //!< 是 APK 文件
         else //!<不是 APK 文件。
         {
           shouldDownload=true; //!< 应当下载。
-          writeLog("APK file is not valid, will download again");
+          FileLogger.d(TAG, "APK file is not valid, will download again");
         }
       } //!<if (apkFile.exists()) //!< 文件存在。
       else //!< 文件不存在
       {
         shouldDownload=true; //!< 应当下载。
-        writeLog("APK file does not exist, will download");
+        FileLogger.d(TAG, "APK file does not exist, will download");
       } //!<else //!< 文件不存在
     } //!<if (apkFilePath!=null) //!< 路径存在。
     else //!< 路径不存在。
     {
       shouldDownload=true; //!< 应当下载。
-      writeLog("APK file path not found, will download");
+      FileLogger.d(TAG, "APK file path not found, will download");
     }
 
     if (shouldDownload) //!< Should download.
     {
       Log.d(TAG, "requestDownloadUrl, 347, download file path: " + uri); //!<debug.
+      FileLogger.d(TAG, "URL scheme: " + uri.getScheme());
 
       ApplicationListData applicationListData = baseApplication.getApplicationListData(); //!<获取本地服务器列表数据对象。
 
@@ -530,15 +500,12 @@ public class DownloadRequestor
       if (applicationListData.containsUrl(fullUrl)) //!<已经包含这个网址。
       {
         Log.d(TAG, "requestDownloadUrl, 357, already downloading: " + uri+", ignore"); //!<debug.
-        writeLog("Already downloading this URL, ignoring");
+        FileLogger.d(TAG, "Already downloading this URL, ignoring");
       } //!<if (applicationListData.containsUrl(fullUrl)) //!<已经包含这个网址。
       else //!<尚未包含这个网址。
       {
         applicationListData.addUrl(fullUrl); //!<记录，已经请求下载这个网址。
 
-        Log.d(TAG, "requestDownloadUrl, url scheme: " + uri.getScheme()); //!<debug.
-        writeLog("URL scheme: " + uri.getScheme());
-        
         String mWordSeparators = baseApplication.getResources().getString(R.string.startDownload); //!< 读取 说明 字符串。
     
         voiceUi.say(mWordSeparators); //!< 说话，需要解锁。
@@ -568,29 +535,29 @@ public class DownloadRequestor
       String versionName=packageInfo.versionName; //!< Get the versin name.
 
       Log.d(TAG, "checkIsApkFile, version name: " + versionName + "/" + expectedVersionName); //!< Debug.
-      writeLog("checkIsApkFile, version name: " + versionName + "/" + expectedVersionName);
+      FileLogger.d(TAG, "checkIsApkFile, version name: " + versionName + "/" + expectedVersionName);
 
       if (versionName.equals(expectedVersionName)) //!< The version name is expected.
       {
         result=true; //!< 是安装包。
-        writeLog("Version name matches, is valid APK");
+        FileLogger.d(TAG, "Version name matches, is valid APK");
       } //!< if (versionName==expectedVersionName)
       else //!< Version name not equal
       {
         if (packageName==null) //!< No package name provided
         {
           result=true; //!< It is apk file.
-          writeLog("No package name provided, accepting APK");
+          FileLogger.d(TAG, "No package name provided, accepting APK");
         } //!< if (packageName==null) //!< No package name provided
         else
         {
-          writeLog("Version name mismatch: " + versionName + " vs " + expectedVersionName);
+          FileLogger.d(TAG, "Version name mismatch: " + versionName + " vs " + expectedVersionName);
         }
       } //!< else //!< Version name not equal
     }
     else
     {
-      writeLog("PackageInfo is null, invalid APK");
+      FileLogger.d(TAG, "PackageInfo is null, invalid APK");
     }
 
     return result;
@@ -620,7 +587,7 @@ public class DownloadRequestor
     String wholePath =downloadFolder.getPath()+ File.separator  + fileName;
     
     Log.d(TAG, "downloadByIon, 463, url: " + targetUrl + ", path: " + wholePath); //!< Debug.
-    writeLog("downloadByIon, url: " + targetUrl + ", path: " + wholePath);
+    FileLogger.d(TAG, "downloadByIon, url: " + targetUrl + ", path: " + wholePath);
 
     fileDownloadFuture= Ion.with(baseApplication)
       .load(targetUrl)
@@ -632,7 +599,7 @@ public class DownloadRequestor
         {
           timerObj.cancel(); //!< Cancel the timer of cancel.
           Log.d(TAG, "downloadByIon, 470, progress: " + downloaded + "/" + total + ", " + targetUrl); //!< 报告进度。
-          writeLog("Download progress: " + downloaded + "/" + total);
+          FileLogger.d(TAG, "Download progress: " + downloaded + "/" + total);
           notifyDownloadProgress(downloaded, total); //!< Notify download progress.
         }
       })
@@ -649,7 +616,7 @@ public class DownloadRequestor
 
           if (e!=null) //!<Some error occured.
           {
-            writeLog("Download failed: " + e.getMessage());
+            FileLogger.e(TAG, "Download failed: " + e.getMessage());
             Toast.makeText(baseApplication, "Download Failed" + targetUrl, Toast.LENGTH_SHORT).show();
 
             Log.d(TAG,"download error:"); //!<Debug.
@@ -660,19 +627,19 @@ public class DownloadRequestor
           } //!<if (e!=null) //!<Some error occured.
           else //!< 下载完毕
           {
-            writeLog("Download completed: " + wholePath);
+            FileLogger.d(TAG, "Download completed: " + wholePath);
             Toast.makeText(baseApplication, "Download Completed" + wholePath, Toast.LENGTH_SHORT).show();
 
             rememberApkFile(wholePath); //!< 记录安装包路径。
                             
             if (checkIsApkFile(wholePath)) //!< 是安装包文件。
             {
-              writeLog("APK file is valid, requesting install");
+              FileLogger.d(TAG, "APK file is valid, requesting install");
               requestInstall(wholePath); //!< 要求安装。陈欣。
             } //!< if (checkIsApkFile(wholePath)) //!< 是安装包文件。
             else //!< 不是安装包。
             {
-              writeLog("APK file is not valid");
+              FileLogger.d(TAG, "APK file is not valid");
               notifyDownloadFail(); //!< 报告下载失败。
             } //!< else //!< 不是安装包。
           } //!<else //!< 下载完毕
@@ -718,7 +685,7 @@ public class DownloadRequestor
   {
     HxLauncherApplication baseApplication = HxLauncherApplication.getInstance(); //!<获取应用程序对象。
     Ion.getDefault(baseApplication).cancelAll(baseApplication);
-    writeLog("Download cancelled");
+    FileLogger.d(TAG, "Download cancelled");
   } //!< public void cancelDownload() //!< Cancel download.
 
 
