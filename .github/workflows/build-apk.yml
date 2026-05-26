@@ -18,27 +18,21 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
+        cache: 'gradle'
+    
+    - name: Grant execute permission to gradlew
+      run: chmod +x gradlew
     
     - name: Build with Gradle
-      uses: gradle-build-action@v2
-      with:
-        arguments: build assembleDebug assembleRelease --warning-mode none
+      run: ./gradlew assembleDebug assembleRelease --warning-mode none
     
-    - name: List APK Files
-      run: |
-        echo "=== Debug APK Directory ==="
-        ls -la app/build/outputs/apk/debug/ || echo "Directory not found"
-        find app/build/outputs -name "*.apk" || echo "No APK files found"
-        echo "=== Release APK Directory ==="
-        ls -la app/build/outputs/apk/release/ || echo "Directory not found"
-    
-    - name: Upload Debug APK artifact
+    - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
         name: hxlauncher-debug
         path: app/build/outputs/apk/debug/*.apk
     
-    - name: Upload Release APK artifact
+    - name: Upload Release APK
       uses: actions/upload-artifact@v4
       with:
         name: hxlauncher-release
