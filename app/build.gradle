@@ -33,6 +33,15 @@ android
   compileSdkVersion 33
   namespace 'com.stupidbeauty.hxlauncher'
 
+  signingConfigs {
+    debug {
+      storeFile file('debug.keystore')
+      storePassword 'android'
+      keyAlias 'androiddebugkey'
+      keyPassword 'android'
+    }
+  }
+
   defaultConfig 
   {
     applicationId "com.stupidbeauty.hxlauncher"
@@ -58,6 +67,7 @@ android
 
     debug
     {
+      signingConfig signingConfigs.debug
       minifyEnabled false
       shrinkResources false
 
@@ -135,7 +145,7 @@ tasks.withType(JavaCompile).configureEach {
     options.fork = true
     options.forkOptions.jvmArgs += 
     [
-      //         # essential for butterknife
+//         # essential for butterknife
         '--add-opens=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED',
 
 //         # if you need Glide or LomBok
