@@ -230,13 +230,12 @@ public class DownloadRequestor
       PackageInstaller packageInstaller = baseApplication.getPackageManager().getPackageInstaller();
       PackageInstaller.SessionParams params = new PackageInstaller.SessionParams( PackageInstaller.SessionParams.MODE_FULL_INSTALL);
 
-      // 设置 USER_ACTION_NOT_REQUIRED (Android S+)
+      // 不设置 USER_ACTION_NOT_REQUIRED，让 MIUI 显示标准安装对话框
+      // MIUI/HyperOS 可能忽略此设置，但移除后兼容性更好
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        FileLogger.d(TAG, "Android S+ (API " + Build.VERSION.SDK_INT + ")，设置 USER_ACTION_NOT_REQUIRED");
-        params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED);
-        FileLogger.d(TAG, "USER_ACTION_NOT_REQUIRED 设置完成");
+        FileLogger.d(TAG, "Android S+ (API " + Build.VERSION.SDK_INT + ")，不设置 USER_ACTION_NOT_REQUIRED，使用默认行为");
       } else {
-        FileLogger.d(TAG, "Android 版本 < S (API " + Build.VERSION.SDK_INT + ")，不设置 USER_ACTION_NOT_REQUIRED");
+        FileLogger.d(TAG, "Android 版本 < S (API " + Build.VERSION.SDK_INT + ")，使用默认行为");
       }
 
       FileLogger.d(TAG, "准备创建 Session");
@@ -534,7 +533,7 @@ public class DownloadRequestor
       {
         boolean isApkFile=checkIsApkFile(apkFilePath); // 检查是不是 APK 文件。
       
-        // 检查是否是有效的安装包文件：
+      // 检查是否是有效的安装包文件：
         if (isApkFile) // 是 APK 文件
         {
           requestInstall(apkFilePath); // 要求安装。
