@@ -160,13 +160,24 @@ public class DownloadRequestor
     fullUrl=null; // Clear download full url.
   } // private void notifyDownloadFinished() // Notify download finished.
   
+  /**
+  * 将 APK 文件写入到 PackageInstaller.Session
+  * @param assetName APK 文件路径
+  * @param session PackageInstaller.Session 对象
+  * @throws IOException 写入失败时抛出
+  */
   private void addApkToInstallSession(String assetName, PackageInstaller.Session session) throws IOException 
   {
+    FileLogger.d(TAG, "addApkToInstallSession 开始：assetName=" + assetName);
+    
     // It's recommended to pass the file size to openWrite(). Otherwise installation may fail
     // if the disk is almost full.
+    FileLogger.d(TAG, "准备打开 Session Write 流");
     OutputStream packageInSession = session.openWrite("package", 0, -1);
+    FileLogger.d(TAG, "Write 流打开成功");
         
     File apkFileObject=new File(assetName);
+    FileLogger.d(TAG, "准备复制 APK 文件，大小=" + apkFileObject.length() + " bytes");
             
 //     byte[] buffer=FileUtils.readFileToByteArray(apkFileObject);
 //             
@@ -175,17 +186,21 @@ public class DownloadRequestor
 //     packageInSession.write(buffer, 0, n);
 
     FileUtils.copyFile(apkFileObject, packageInSession); // Copy to output stream.
+    FileLogger.d(TAG, "APK 文件复制完成");
 
     packageInSession.close();
+    FileLogger.d(TAG, "Write 流已关闭");
+    
+    FileLogger.d(TAG, "addApkToInstallSession 完成");
   } // private void addApkToInstallSession(String assetName, PackageInstaller.Session session) throws IOException 
 
   /**
-  * 要求安装应用
+  * 要求安装应用 (使用 PackageInstaller.Session API)
   * @param downloadFilePath 应用安装包路径
   */
   private void requestInstallApi(String downloadFilePath)
   {
-    FileLogger.d(TAG, "requestInstallApi: " + downloadFilePath);
+    FileLogger.d(TAG, "requestInstallApi 开始：apkPath=" + downloadFilePath);
     
     HxLauncherApplication baseApplication = HxLauncherApplication.getInstance(); //获取应用程序对象。
 
@@ -208,59 +223,81 @@ public class DownloadRequestor
       }
     }
 
-    //   https://github.com/aosp-mirror/platform_development/blob/master/samples/ApiDemos/src/com/example/android/apis/content/InstallApkSessionApi.java
-
+    FileLogger.d(TAG, "创建 SessionParams, MODE_FULL_INSTALL");
     PackageInstaller.Session session = null;
     try 
     {
       PackageInstaller packageInstaller = baseApplication.getPackageManager().getPackageInstaller();
       PackageInstaller.SessionParams params = new PackageInstaller.SessionParams( PackageInstaller.SessionParams.MODE_FULL_INSTALL);
 
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) // USER_ACTION_NOT_REQUIRED
-      {
-        params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED); // Silent update.
-      } //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) //动态权限
+      // 设置 USER_ACTION_NOT_REQUIRED (Android S+)
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        FileLogger.d(TAG, "Android S+ (API " + Build.VERSION.SDK_INT + ")，设置 USER_ACTION_NOT_REQUIRED");
+        params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED);
+        FileLogger.d(TAG, "USER_ACTION_NOT_REQUIRED 设置完成");
+      } else {
+        FileLogger.d(TAG, "Android 版本 < S (API " + Build.VERSION.SDK_INT + ")，不设置 USER_ACTION_NOT_REQUIRED");
+      }
 
+      FileLogger.d(TAG, "准备创建 Session");
       int sessionId = packageInstaller.createSession(params);
+      FileLogger.d(TAG, "Session 创建成功，sessionId=" + sessionId);
+      
       session = packageInstaller.openSession(sessionId);
+      FileLogger.d(TAG, "Session 已打开");
 
-      //                     addApkToInstallSession("HelloActivity.apk", session);
+      FileLogger.d(TAG, "准备写入 APK 文件到 Session");
       addApkToInstallSession(downloadFilePath, session);
+      FileLogger.d(TAG, "APK 文件写入完成");
 
       // Create an install status receiver.
-      //                     Context context = InstallApkSessionApi.this;
+      FileLogger.d(TAG, "创建 PendingIntent，packageName=" + baseApplication.getPackageName());
       Intent intent = new Intent(baseApplication, LauncherActivity.class);
       intent.setAction(PACKAGE_INSTALLED_ACTION);
 
       PendingIntent pendingIntent = PendingIntent.getActivity(baseApplication, 0, intent, PendingIntent.FLAG_MUTABLE);
-      // PendingIntent contentIntent = PendingIntent.getActivity(this, 0, new Intent(this, LauncherActivity.class), PendingIntent.FLAG_IMMUTABLE);
+      FileLogger.d(TAG, "PendingIntent 创建成功");
 
       IntentSender statusReceiver = pendingIntent.getIntentSender();
+      FileLogger.d(TAG, "IntentSender 获取成功");
 
       // Commit the session (this will start the installation workflow).
+      FileLogger.d(TAG, "准备 commit Session");
       session.commit(statusReceiver);
+      FileLogger.d(TAG, "Session commit 成功，安装流程已启动");
       
-      session.close(); // Finish the sesison.
+      session.close();
+      FileLogger.d(TAG, "Session 已关闭");
     }
     catch (IOException e) 
     {
-      // throw new RuntimeException("Couldn't install package", e);
       FileLogger.e(TAG, "requestInstallApi IOException: " + e.getMessage());
+      FileLogger.e(TAG, "异常堆栈：" + Log.getStackTraceString(e));
       e.printStackTrace(); // Report error.
     }
     catch (RuntimeException e) 
     {
+      FileLogger.e(TAG, "requestInstallApi RuntimeException: " + e.getMessage());
+      FileLogger.e(TAG, "异常堆栈：" + Log.getStackTraceString(e));
       if (session != null) 
       {
+        FileLogger.d(TAG, "发生异常，abandon session");
         session.abandon();
       }
       // throw e;
       e.printStackTrace(); // Report error.
     }
-    // catch (IllegalStateException e)
-    // {
-    //   e.printStackTrace(); // Report error.
-    // } // catch (IllegalStateException e)
+    catch (Exception e) 
+    {
+      FileLogger.e(TAG, "requestInstallApi Exception: " + e.getMessage());
+      FileLogger.e(TAG, "异常堆栈：" + Log.getStackTraceString(e));
+      if (session != null) 
+      {
+        FileLogger.d(TAG, "发生异常，abandon session");
+        session.abandon();
+      }
+      e.printStackTrace(); // Report error.
+    }
 
     String mWordSeparators = baseApplication.getResources().getString(R.string.prepareInstall); // 读取 说明 字符串。Prepare install
 
@@ -272,7 +309,7 @@ public class DownloadRequestor
   } //private void requestInstall(String downloadFilePath)
 
   /**
-  * 要求安装应用
+  * 要求安装应用 (使用 Intent VIEW 方式)
   * @param downloadFilePath 应用安装包路径
   */
   private void requestInstallView(String downloadFilePath)
@@ -317,6 +354,7 @@ public class DownloadRequestor
       {
 //       4/3/22 17:22java.lang.IllegalArgumentException: Failed to find configured root that contains /storage/emulated/0/download/b75da43000c64716bd5a688e65bfb370.apk
 
+        FileLogger.e(TAG, "FileProvider getUriForFile 失败：" + e.getMessage());
         e.printStackTrace();
         
         intent.setDataAndType(Uri.fromFile(file), type);
