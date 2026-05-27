@@ -13,11 +13,6 @@ import android.os.Looper;
 import android.speech.SpeechRecognizer;
 import android.util.Log;
 import android.app.Application;
-import android.os.Looper;
-import android.speech.SpeechRecognizer;
-import android.util.Log;
-import android.app.Application;
-import android.os.Looper;
 import java.util.Timer;
 import java.util.TimerTask;
 import android.Manifest;
@@ -26,9 +21,6 @@ import android.app.Activity;
 import com.stupidbeauty.voiceui.VoiceUi;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageItemInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
-import android.content.pm.ShortcutInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ShortcutInfo;
@@ -47,16 +39,8 @@ import com.stupidbeauty.hxlauncher.R;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import com.stupidbeauty.hxlauncher.R;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
 import java.io.IOException;
 import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -92,28 +76,29 @@ import com.stupidbeauty.hxlauncher.rpc.RecognizerResult;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
+import com.stupidbeauty.hxlauncher.utils.FileLogger;
 
 public class DownloadRequestor
 {
-  private Timer timerObj = null; //!< The timer of cancelling download when no progress for a long time.
-private static final String PACKAGE_INSTALLED_ACTION = "com.example.android.apis.content.SESSION_API_PACKAGE_INSTALLED";
+  private Timer timerObj = null; // The timer of cancelling download when no progress for a long time.
+  private static final String PACKAGE_INSTALLED_ACTION = "com.example.android.apis.content.SESSION_API_PACKAGE_INSTALLED";
 
-  private Notification continiusNotification=null; //!<记录的通知
-  private LauncherActivity launcherActivity=null; //!< 启动活动。
-  private int NOTIFICATION = 84951; //!< 通知编号。陈欣
-  private VoiceUi voiceUi=null; //!< 语音交互对象。
+  private Notification continiusNotification=null; //记录的通知
+  private LauncherActivity launcherActivity=null; // 启动活动。
+  private int NOTIFICATION = 84951; //通知编号。陈欣
+  private VoiceUi voiceUi=null; // 语音交互对象。
 
-  private String packageName=null; //!< 包名。
-  private String fullUrl = null; //!< Downloading full url.
+  private String packageName=null; // 包名。
+  private String fullUrl = null; // Downloading full url.
 
-  public Future<File> fileDownloadFuture; //!<The file download future.
+  public Future<File> fileDownloadFuture; //The file download future.
   private NotificationManager mNM;
 
-  private static final String TAG="DownloadRequestor"; //!<输出调试信息了时使用的标记
+  private static final String TAG="DownloadRequestor"; //输出调试信息了时使用的标记
 
-  private CloudRequestorZzaqwb cloudRequestorZzaqwb=new CloudRequestorZzaqwb(); //!<云端请求发送器
+  private CloudRequestorZzaqwb cloudRequestorZzaqwb=new CloudRequestorZzaqwb(); //云端请求发送器
 
-  private long downloadId; //!<当前的下载编号
+  private long downloadId; //当前的下载编号
 
   /**
   * 记录安装包路径。
@@ -127,6 +112,7 @@ private static final String PACKAGE_INSTALLED_ACTION = "com.example.android.apis
       HashMap<String, String> apkFilePathMap=baseApplication.getApkFilePathMap(); // 获取 APK 安装包路径映射。
             
       Log.d(TAG, "rememberApkFile, package name: " + packageName + ", apk file path: " + apkFilePath); // Debug.
+      FileLogger.d(TAG, "rememberApkFile: " + packageName);
             
       apkFilePathMap.put(packageName, apkFilePath); // 加入映射中。
             
@@ -152,6 +138,7 @@ private static final String PACKAGE_INSTALLED_ACTION = "com.example.android.apis
   */
   private void requestInstall(String downloadFilePath)
   {
+    FileLogger.d(TAG, "requestInstall: " + downloadFilePath);
     notifyDownloadFinished(); // Notify download finished.
     requestInstallApi(downloadFilePath); // Request install by view.
   } //private void requestInstall(String downloadFilePath)
@@ -199,6 +186,8 @@ private static final String PACKAGE_INSTALLED_ACTION = "com.example.android.apis
   */
   private void requestInstallApi(String downloadFilePath)
   {
+    FileLogger.d(TAG, "requestInstallApi: " + downloadFilePath);
+    
     HxLauncherApplication baseApplication = HxLauncherApplication.getInstance(); //获取应用程序对象。
 
     //   https://github.com/aosp-mirror/platform_development/blob/master/samples/ApiDemos/src/com/example/android/apis/content/InstallApkSessionApi.java
@@ -238,6 +227,7 @@ private static final String PACKAGE_INSTALLED_ACTION = "com.example.android.apis
     catch (IOException e) 
     {
       // throw new RuntimeException("Couldn't install package", e);
+      FileLogger.e(TAG, "requestInstallApi IOException: " + e.getMessage());
       e.printStackTrace(); // Report error.
     }
     catch (RuntimeException e) 
@@ -259,6 +249,8 @@ private static final String PACKAGE_INSTALLED_ACTION = "com.example.android.apis
     voiceUi.say(mWordSeparators); // 说话，prepare install
 
     stopDownloadNotificationService(); // 停止，下载通知服务。
+    
+    FileLogger.d(TAG, "requestInstallApi done");
   } //private void requestInstall(String downloadFilePath)
 
   /**
@@ -267,12 +259,14 @@ private static final String PACKAGE_INSTALLED_ACTION = "com.example.android.apis
   */
   private void requestInstallView(String downloadFilePath)
   {
+    FileLogger.d(TAG, "requestInstallView: " + downloadFilePath);
+    
 //             Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
 //             intent.setData(getApkUri("HelloActivity.apk"));
 //             intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 //             startActivity(intent);
 //    
-  
+
     HxLauncherApplication baseApplication = HxLauncherApplication.getInstance(); //获取应用程序对象。
         
     String type = "application/vnd.android.package-archive";
@@ -282,7 +276,7 @@ private static final String PACKAGE_INSTALLED_ACTION = "com.example.android.apis
 //         Intent.ACTION_INSTALL_PACKAGE
     Intent intent = new Intent(Intent.ACTION_VIEW);
 //     Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
-      
+     
 // 1/25/23 18:59android.content.ActivityNotFoundException: No Activity found to handle Intent { act=android.intent.action.INSTALL_PACKAGE dat=file:///storage/emulated/0/Android/data/com.stupidbeauty.hxlauncher/cache/com.cs_credit_bank.apk typ=application/vnd.android.package-archive flg=0x10000000 }
 
 //       04-01 16:12:41.051 19837 19837 E AndroidRuntime: android.content.ActivityNotFoundException: No Activity found to handle Intent { act=android.intent.action.VIEW dat=file:///storage/emulated/0/Android/data/com.stupidbeauty.hxlauncher/files/Download/5F1E59D37ED5FCA5542C7EB86977A9D4.apk typ=application/vnd.android.package-archive flg=0x10000000 }
@@ -324,6 +318,8 @@ private static final String PACKAGE_INSTALLED_ACTION = "com.example.android.apis
     baseApplication.startActivity(intent);
         
     stopDownloadNotificationService(); // 停止，下载通知服务。
+    
+    FileLogger.d(TAG, "requestInstallView done");
   } //private void requestInstall(String downloadFilePath)
 
   public DownloadRequestor() 
@@ -361,6 +357,7 @@ private static final String PACKAGE_INSTALLED_ACTION = "com.example.android.apis
             if (localCursor.getInt(localCursor.getColumnIndex(DownloadManager.COLUMN_REASON)) == DownloadManager.ERROR_INSUFFICIENT_SPACE)
             {
               Log.w("DownloadStatus", " Download failed with ERROR_INSUFFICIENT_SPACE");
+              FileLogger.w(TAG, "ERROR_INSUFFICIENT_SPACE");
                                     
               long currentId=localCursor.getLong(localCursor.getColumnIndex(DownloadManager.COLUMN_ID)); // 获取当前这条记录的编号。
               // 陈欣
@@ -375,6 +372,8 @@ private static final String PACKAGE_INSTALLED_ACTION = "com.example.android.apis
         while (localCursor.moveToNext());
       }
     });
+    
+    FileLogger.d(TAG, "DownloadRequestor created");
   } // public DownloadRequestor() 
 
   private void showNotification(String contentText)
@@ -387,7 +386,7 @@ private static final String PACKAGE_INSTALLED_ACTION = "com.example.android.apis
 		PendingIntent contentIntent = PendingIntent.getActivity(baseApplication, 0, new Intent(baseApplication, LauncherActivity.class), PendingIntent.FLAG_MUTABLE);
     // PendingIntent pendingIntent = PendingIntent.getActivity(baseApplication, 0, intent, PendingIntent.FLAG_MUTABLE);
 
-		String downloadingText="Downloading " + contentText; // 构造字符串，正在下载。陈欣。
+		String downloadingText="Downloading " + contentText; // 构造字符串正在下载。陈欣。
 
 		// Set the info for the views that show in the notification panel.
 		Notification notification = new Notification.Builder(baseApplication)
@@ -459,6 +458,8 @@ private static final String PACKAGE_INSTALLED_ACTION = "com.example.android.apis
   */
   public void requestDownloadUrl(Uri uri, String refererUrl, String applicationName, String packageName)
   {
+    FileLogger.d(TAG, "requestDownloadUrl: " + uri);
+    
     HxLauncherApplication baseApplication = HxLauncherApplication.getInstance(); //获取应用程序对象。
 
     HashMap<String, String> apkFilePathMap=baseApplication.getApkFilePathMap(); // 获取 APK 安装包路径映射。
@@ -629,6 +630,7 @@ private static final String PACKAGE_INSTALLED_ACTION = "com.example.android.apis
           } //if (e!=null) //Some error occured.
           else // 下载完毕
           {
+            FileLogger.d(TAG, "download completed: " + wholePath);
             Toast.makeText(baseApplication, "Download Completed" + wholePath, Toast.LENGTH_SHORT).show();
 
             rememberApkFile(wholePath); // 记录安装包路径。
@@ -663,7 +665,7 @@ private static final String PACKAGE_INSTALLED_ACTION = "com.example.android.apis
         Runnable runnable= new Runnable()
         {
           /**
-          * 具体执行的代码
+          *具体执行的代码
           */
           public void run()
           {
