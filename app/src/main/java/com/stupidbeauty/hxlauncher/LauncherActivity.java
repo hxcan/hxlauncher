@@ -820,7 +820,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
     Log.w(TAG, "onCreate, 807, timestamp: " + System.currentTimeMillis()); //Debug.
     loadVoiceShortcutIdMap(); //载入语音识别结果与快捷方式之间的映射。
 
-    // 只替换preload方法包含的4个调用
+    // 只替换 preload 方法包含的 4 个调用
     MetadataPreloader.preload(this);
 
     loadShortcuts(); //载入快捷方式列表。
@@ -975,7 +975,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
   {
     if (shortcutInfos != null) // The list exists
     {
-      if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) //26之后才有钉住的快捷方式。
+      if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) //26 之后才有钉住的快捷方式。
       {
         shortcutTitleInfoMap=new HashMap<>(); //创建映射。
         shortcutIdInfoMap=new HashMap<>(); //创建映射。
@@ -988,7 +988,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
           shortcutTitleInfoMap.put(title, shortcutInfo); //加入映射。
           shortcutIdInfoMap.put(shortcutId, shortcutInfo); //加入映射。
         } //for(ShortcutInfo shortcutInfo: shortcutInfos) //一个个地显示。
-      } //if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) //26之后才有钉住的快捷方式。
+      } //if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) //26 之后才有钉住的快捷方式。
     } // if (shortcutInfos!=null) // The list exists
   } //private void buildShortcutTitleInfoMap(List<ShortcutInfo> shortcutInfos)
 
@@ -1287,7 +1287,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
     } //private void assessInitializeMsc()
 
     /**
-     * 初始化MSC。
+     * 初始化 MSC。
      */
     private void initializeMsc()
     {
@@ -1425,7 +1425,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
      */
     private void registerLauncherAppsCallback()
     {
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) //21之后才有启动器应用对象。
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) //21 之后才有启动器应用对象。
       {
         LauncherApps launcherApps=(LauncherApps) (getSystemService(Context.LAUNCHER_APPS_SERVICE)); //获取启动器应用对象。
 
@@ -1477,7 +1477,12 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
               FileLogger.d(TAG, "onNewIntent: confirmIntent=" + confirmIntent);
               if (confirmIntent != null)
               {
-                FileLogger.d(TAG, "onNewIntent: starting confirmIntent with action=" + confirmIntent.getAction());
+                // 为 MIUI 添加额外的 Flags
+                confirmIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                confirmIntent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+                confirmIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+                
+                FileLogger.d(TAG, "onNewIntent: starting confirmIntent with action=" + confirmIntent.getAction() + ", flags=" + confirmIntent.getFlags());
                 try
                 {
                   startActivity(confirmIntent);
@@ -1585,14 +1590,14 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
       registerReceiver(mBroadcastReceiver, lanimeInputtingIntentFilter); //注册广播事件接收器。
 
-      if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) //26之后才有钉住快捷方式的广播。
+      if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) //26 之后才有钉住快捷方式的广播。
       {
         //添加钉住的快捷方式：
         IntentFilter pinShortcutsIntentFilter=new IntentFilter(); //创建意图过滤器。
         pinShortcutsIntentFilter.addAction(LauncherApps.ACTION_CONFIRM_PIN_SHORTCUT); //钉住快捷方式。
 
         registerReceiver(mBroadcastReceiver, pinShortcutsIntentFilter); //注册广播事件接收器。
-      } //if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) //26之后才有钉住快捷方式的广播。
+      } //if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) //26 之后才有钉住快捷方式的广播。
 
       //传统的安装快捷方式：
       IntentFilter legacyShortcutIntentFilter=new IntentFilter(); //创建意图过滤器。
@@ -1672,7 +1677,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
         {
         } //else if (LegacyInstallShortcut.equals(action)) //传统的安装快捷方式。
 
-        if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) //26之后都有钉住快捷方式的广播。
+        if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) //26 之后都有钉住快捷方式的广播。
         {
           if (LauncherApps.ACTION_CONFIRM_PIN_SHORTCUT.equals(action)) //钉住快捷方式。
           {
@@ -1698,7 +1703,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
             pinShortcut(shortcutInfo); //钉住快捷方式。
           } //if (LauncherApps.ACTION_CONFIRM_PIN_SHORTCUT.equals(action)) //钉住快捷方式。
-        } //if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) //26之后都有钉住快捷方式的广播。
+        } //if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) //26 之后都有钉住快捷方式的广播。
       } //public void onReceive(Context context, Intent intent)
     }; //private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver()
 
@@ -1868,7 +1873,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
      */
     private void pinShortcut(LauncherApps.PinItemRequest pinItemRequest)
     {
-      if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) //26之后才有钉住快捷方式的请求对象。
+      if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) //26 之后才有钉住快捷方式的请求对象。
       {
         ShortcutInfo shortcutInfo=pinItemRequest.getShortcutInfo(); //获取快捷方式对象。
 
@@ -1879,7 +1884,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
         mAdapter.notifyDataSetChanged(); //通知数据变更。
 
         pinItemRequest.accept(); //接受。
-      } //if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) //26之后才有钉住快捷方式的请求对象。
+      } //if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) //26 之后才有钉住快捷方式的请求对象。
     } //private void pinShortcut(LauncherApps.PinItemRequest pinItemRequest)
     
     /**
@@ -1959,7 +1964,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
     } //private void checkErrorCode(int errorCode)
 
     /**
-     * 启动友军"21点关机"的服务。
+     * 启动友军"21 点关机"的服务。
      */
     protected void startFriendShutDownAt2100Service()
     {
@@ -2130,7 +2135,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
             // mInstaller.install();
           } else
           {
-            statustextView.setText("识别失败，错误码: " + ret);
+            statustextView.setText("识别失败，错误码：" + ret);
           }
 
           Log.d(TAG, CodePosition.newInstance().toString()); // Debug.
@@ -2200,10 +2205,10 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
         mIat.setParameter(SpeechConstant.ENGINE_TYPE, mEngineType);
 
-        // 设置返回结果为json格式
+        // 设置返回结果为 json 格式
         mIat.setParameter(SpeechConstant.RESULT_TYPE, "json");
 
-        // 设置云端识别使用的语法id
+        // 设置云端识别使用的语法 id
         mIat.setParameter(SpeechConstant.DOMAIN,"iat");
 
         setLanguageAndAccentParameters(); //设置语言及区域参数字符串。
@@ -2216,8 +2221,8 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
         result = true;
 
-        // 设置音频保存路径，保存音频格式支持pcm、wav，设置路径为sd卡请注意WRITE_EXTERNAL_STORAGE权限
-        // 注：AUDIO_FORMAT参数语记需要更新版本才能生效
+        // 设置音频保存路径，保存音频格式支持 pcm、wav，设置路径为 sd 卡请注意 WRITE_EXTERNAL_STORAGE 权限
+        // 注：AUDIO_FORMAT 参数语记需要更新版本才能生效
         mIat.setParameter(SpeechConstant.AUDIO_FORMAT, "wav");
 
         recordSoundFilePath=Environment.getExternalStorageDirectory() + "/msc/asr."+ recognizeCounter +".wav"; //构造录音文件路径．
@@ -2543,8 +2548,8 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
   /**
     * 显示点赞爱心动画
-    * @param itemViewgetX X坐标
-    * @param itemViewgetY Y坐标
+    * @param itemViewgetX X 坐标
+    * @param itemViewgetY Y 坐标
     */
   public void animateHeart(float itemViewgetX, float itemViewgetY)
   {
@@ -2565,7 +2570,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
     */
   private void showHitShortCut(String packageName, String activityName)
   {
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) //25之后才有快捷方式
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) //25 之后才有快捷方式
       {
           LauncherApps launcherApps=(LauncherApps)(getSystemService(Context.LAUNCHER_APPS_SERVICE));
 
@@ -2582,7 +2587,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
               animateHitApplication(); //动画旋转，命中应用。陈欣
           } //if (shortcutInfo!=null) //快捷方式信息对象存在
-      } //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) //21之后才有启动应用
+      } //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) //21 之后才有启动应用
   } //private void showHitShortCut(String packageName, String activityName)
 
   /**
@@ -2989,16 +2994,16 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
           List<String> idList= Arrays.asList(activityName); //构造编号列表．
 
-          if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.N_MR1) //25之后才有快捷方式编号。
+          if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.N_MR1) //25 之后才有快捷方式编号。
           {
             LauncherApps.ShortcutQuery query=new LauncherApps.ShortcutQuery(); //创建查询器．
 
             int queryFlag= FLAG_MATCH_PINNED | FLAG_MATCH_MANIFEST | FLAG_MATCH_DYNAMIC; //查询标志位
 
-            if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.P) //25之后才有快捷方式编号。
+            if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.P) //25 之后才有快捷方式编号。
             {
               queryFlag = queryFlag | FLAG_MATCH_PINNED_BY_ANY_LAUNCHER;
-            } //if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.N_MR1) //25之后才有快捷方式编号。
+            } //if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.N_MR1) //25 之后才有快捷方式编号。
 
             query.setQueryFlags(queryFlag); //设置标志位．
 
@@ -3017,7 +3022,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
               voiceCommandHitDataReporter.reportVoiceCommandHitData(voiceRecognizeResultString, packageName, activityName, recordSoundFilePath, ShortcutIconType, shortcutTitle); // Report voice command hit data. Hit short cut.
             } //if (shortcutInfos.size()) //有快捷方式。
-          } //if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.N_MR1) //25之后才有快捷方式编号。
+          } //if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.N_MR1) //25 之后才有快捷方式编号。
         } //if (voicePackageNameMap.contains(voiceRecognizeResultString)) //有对应的映射关系。
       } // if (voiceShortcutIdMap!=null) // The map exists. Loaded.
 
@@ -3187,7 +3192,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
      */
     public void launchShortcut(ShortcutInfo shortcutInfo)
     {
-      if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.N_MR1) //25之后才有快捷方式编号。
+      if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.N_MR1) //25 之后才有快捷方式编号。
       {
         String shortcutId=shortcutInfo.getId(); //Get the shortcut id.
 
@@ -3196,7 +3201,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
         hideIconList(); //隐藏图标列表
 
         launchShortcut(packageName, shortcutId); //启动快捷方式。
-      } //if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.N_MR1) //25之后才有快捷方式编号。
+      } //if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.N_MR1) //25 之后才有快捷方式编号。
     } //public void launchShortcut(ShortcutInfo shortcutInfo)
 
     /**
@@ -3209,7 +3214,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
         try //尝试启动快捷方式
         {
-            if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.N_MR1) //25之后才有快捷方式编号。
+            if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.N_MR1) //25 之后才有快捷方式编号。
             {
                 LauncherApps launcherApps=(LauncherApps) (getSystemService(Context.LAUNCHER_APPS_SERVICE)); //获取启动器应用对象。
 
@@ -3217,7 +3222,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
                 launchSuccess=true; //成功启动。
 
-            } //if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.N_MR1) //25之后才有快捷方式编号。
+            } //if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.N_MR1) //25 之后才有快捷方式编号。
         } //try //尝试启动快捷方式
         catch (ActivityNotFoundException e)
         {
