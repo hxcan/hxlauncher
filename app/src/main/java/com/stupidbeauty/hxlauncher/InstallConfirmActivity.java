@@ -20,7 +20,13 @@ public class InstallConfirmActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // 不设置布局，这是一个透明的回调处理 Activity
+        
+        // 处理安装确认回调（某些情况下系统可能直接调用 onCreate 而不是 onNewIntent）
+        if (PACKAGE_INSTALLED_ACTION.equals(getIntent().getAction())) {
+            handleInstallCallback(getIntent());
+            finish();
+            return;
+        }
     }
 
     @Override
@@ -29,68 +35,71 @@ public class InstallConfirmActivity extends Activity {
         FileLogger.d(TAG, CodePosition.newInstance().toString() + ", onNewIntent: " + intent);
         
         if (PACKAGE_INSTALLED_ACTION.equals(intent.getAction())) {
-            Bundle extras = intent.getExtras();
-            FileLogger.d(TAG, "onNewIntent: extras=" + extras);
+            handleInstallCallback(intent);
+        }
+    }
+    
+    private void handleInstallCallback(Intent intent) {
+        Bundle extras = intent.getExtras();
+        FileLogger.d(TAG, "handleInstallCallback: extras=" + extras);
+        
+        if (extras != null) {
+            int status = extras.getInt(PackageInstaller.EXTRA_STATUS);
+            String message = extras.getString(PackageInstaller.EXTRA_STATUS_MESSAGE);
+            String packageName = extras.getString(PackageInstaller.EXTRA_PACKAGE_NAME);
             
-            if (extras != null) {
-                int status = extras.getInt(PackageInstaller.EXTRA_STATUS);
-                String message = extras.getString(PackageInstaller.EXTRA_STATUS_MESSAGE);
-                String packageName = extras.getString(PackageInstaller.EXTRA_PACKAGE_NAME);
-                
-                FileLogger.d(TAG, "onNewIntent: status=" + status + ", message=" + message + ", packageName=" + packageName);
-                
-                switch (status) {
-                    case PackageInstaller.STATUS_PENDING_USER_ACTION:
-                        FileLogger.d(TAG, "onNewIntent: STATUS_PENDING_USER_ACTION - starting confirm dialog");
-                        Intent confirmIntent = extras.getParcelable(Intent.EXTRA_INTENT);
-                        FileLogger.d(TAG, "onNewIntent: confirmIntent=" + confirmIntent);
-                        if (confirmIntent != null) {
-                            try {
-                                startActivity(confirmIntent);
-                                FileLogger.d(TAG, "onNewIntent: confirmIntent started successfully");
-                            } catch (Exception e) {
-                                FileLogger.e(TAG, "onNewIntent: failed to start confirmIntent: " + e.getMessage(), e);
-                                Toast.makeText(this, "Failed to show install dialog: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                finish();
-                            }
-                        } else {
-                            FileLogger.e(TAG, "onNewIntent: confirmIntent is null!");
-                            Toast.makeText(this, "Install confirmation intent is null", Toast.LENGTH_LONG).show();
+            FileLogger.d(TAG, "handleInstallCallback: status=" + status + ", message=" + message + ", packageName=" + packageName);
+            
+            switch (status) {
+                case PackageInstaller.STATUS_PENDING_USER_ACTION:
+                    FileLogger.d(TAG, "handleInstallCallback: STATUS_PENDING_USER_ACTION - starting confirm dialog");
+                    Intent confirmIntent = extras.getParcelable(Intent.EXTRA_INTENT);
+                    FileLogger.d(TAG, "handleInstallCallback: confirmIntent=" + confirmIntent);
+                    if (confirmIntent != null) {
+                        try {
+                            startActivity(confirmIntent);
+                            FileLogger.d(TAG, "handleInstallCallback: confirmIntent started successfully");
+                        } catch (Exception e) {
+                            FileLogger.e(TAG, "handleInstallCallback: failed to start confirmIntent: " + e.getMessage(), e);
+                            Toast.makeText(this, "Failed to show install dialog: " + e.getMessage(), Toast.LENGTH_LONG).show();
                             finish();
                         }
-                        break;
-                        
-                    case PackageInstaller.STATUS_SUCCESS:
-                        FileLogger.d(TAG, "onNewIntent: STATUS_SUCCESS - " + packageName);
-                        Toast.makeText(this, "Install succeeded!", Toast.LENGTH_SHORT).show();
-                        // 启动已安装的应用
-                        if (packageName != null) {
-                            Intent launchIntent = getPackageManager().getLaunchIntentForPackage(packageName);
-                            if (launchIntent != null) {
-                                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                startActivity(launchIntent);
-                            }
+                    } else {
+                        FileLogger.e(TAG, "handleInstallCallback: confirmIntent is null!");
+                        Toast.makeText(this, "Install confirmation intent is null", Toast.LENGTH_LONG).show();
+                        finish();
+                    }
+                    break;
+                    
+                case PackageInstaller.STATUS_SUCCESS:
+                    FileLogger.d(TAG, "handleInstallCallback: STATUS_SUCCESS - " + packageName);
+                    Toast.makeText(this, "Install succeeded!", Toast.LENGTH_SHORT).show();
+                    if (packageName != null) {
+                        Intent launchIntent = getPackageManager().getLaunchIntentForPackage(packageName);
+                        if (launchIntent != null) {
+                            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(launchIntent);
                         }
-                        finish();
-                        break;
-                        
-                    case PackageInstaller.STATUS_FAILURE_ABORTED:
-                    case PackageInstaller.STATUS_FAILURE_BLOCKED:
-                    case PackageInstaller.STATUS_FAILURE_CONFLICT:
-                    case PackageInstaller.STATUS_FAILURE_INCOMPATIBLE:
-                    case PackageInstaller.STATUS_FAILURE_INVALID:
-                    case PackageInstaller.STATUS_FAILURE_STORAGE:
-                        FileLogger.e(TAG, "onNewIntent: STATUS_FAILURE_* - " + status + ", " + message);
-                        Toast.makeText(this, "Install failed: " + message, Toast.LENGTH_LONG).show();
-                        finish();
-                        break;
-                        
-                    default:
-                        FileLogger.w(TAG, "onNewIntent: Unrecognized status - " + status);
-                        Toast.makeText(this, "Unrecognized status: " + status, Toast.LENGTH_SHORT).show();
-                        finish();
-                        break;
-                }
+                    }
+                    finish();
+                    break;
+                    
+                case PackageInstaller.STATUS_FAILURE_ABORTED:
+                case PackageInstaller.STATUS_FAILURE_BLOCKED:
+                case PackageInstaller.STATUS_FAILURE_CONFLICT:
+                case PackageInstaller.STATUS_FAILURE_INCOMPATIBLE:
+                case PackageInstaller.STATUS_FAILURE_INVALID:
+                case PackageInstaller.STATUS_FAILURE_STORAGE:
+                    FileLogger.e(TAG, "handleInstallCallback: STATUS_FAILURE_* - " + status + ", " + message);
+                    Toast.makeText(this, "Install failed: " + message, Toast.LENGTH_LONG).show();
+                    finish();
+                    break;
+                    
+                default:
+                    FileLogger.w(TAG, "handleInstallCallback: Unrecognized status - " + status);
+                    Toast.makeText(this, "Unrecognized status: " + status, Toast.LENGTH_SHORT).show();
+                    finish();
+                    break;
             }
         }
     }
