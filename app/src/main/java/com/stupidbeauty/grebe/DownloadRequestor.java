@@ -189,6 +189,25 @@ public class DownloadRequestor
     
     HxLauncherApplication baseApplication = HxLauncherApplication.getInstance(); //获取应用程序对象。
 
+    // 检查是否拥有安装未知应用的权限 #798465525979
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      if (!baseApplication.getPackageManager().canRequestPackageInstalls()) {
+        FileLogger.e(TAG, "缺少安装未知应用权限，引导用户开启");
+        Toast.makeText(baseApplication, "为了能够自动安装应用，需要开启'安装未知应用'权限", Toast.LENGTH_LONG).show();
+        
+        // 跳转到系统设置页面
+        Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
+        intent.setData(Uri.parse("package:" + baseApplication.getPackageName()));
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        baseApplication.startActivity(intent);
+        
+        FileLogger.d(TAG, "已跳转到安装未知应用设置页面");
+        return; // 等待用户开启权限后再继续
+      } else {
+        FileLogger.d(TAG, "已拥有安装未知应用权限");
+      }
+    }
+
     //   https://github.com/aosp-mirror/platform_development/blob/master/samples/ApiDemos/src/com/example/android/apis/content/InstallApkSessionApi.java
 
     PackageInstaller.Session session = null;
@@ -475,14 +494,14 @@ public class DownloadRequestor
         
       if (apkFile.exists()) // 文件存在。
       {
-        boolean isApkFile=checkIsApkFile(apkFilePath); // 检查是不是APK文件。
+        boolean isApkFile=checkIsApkFile(apkFilePath); // 检查是不是 APK 文件。
       
         // 检查是否是有效的安装包文件：
-        if (isApkFile) // 是APK文件
+        if (isApkFile) // 是 APK 文件
         {
           requestInstall(apkFilePath); // 要求安装。
-        } // if (isApkFile) // 是APK文件
-        else //不是APK文件。
+        } // if (isApkFile) // 是 APK 文件
+        else //不是 APK 文件。
         {
           shouldDownload=true; // 应当下载。
         }
@@ -527,7 +546,7 @@ public class DownloadRequestor
   } // public void requestDownloadUrl(Uri uri, String refererUrl, String applicationName, String packageName)
 
   /**
-  * 检查是不是APK文件。
+  * 检查是不是 APK 文件。
   */
   private boolean checkIsApkFile(String apkFilePath) 
   {
@@ -569,7 +588,7 @@ public class DownloadRequestor
   */
   private void downloadByIon(Uri uri)
   {
-    String targetUrl=uri.toString(); //获取目标URL。
+    String targetUrl=uri.toString(); //获取目标 URL。
 
     HxLauncherApplication baseApplication = HxLauncherApplication.getInstance(); //获取应用程序对象。
 
