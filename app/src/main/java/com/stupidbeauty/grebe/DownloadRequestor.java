@@ -1,7 +1,6 @@
 package com.stupidbeauty.grebe;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import android.content.IntentSender;
 import android.content.pm.PackageInstaller;
