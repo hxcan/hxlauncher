@@ -420,8 +420,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
     
   private void applyBuiltinShortcuts()
   {
-      Log.d(TAG, "applyBuiltinShortcuts, builtinShortcuts length: "  + articleInfoArrayList.size()); // Debug.
-
       mAdapter.setBuiltinShortcuts(builtinShortcuts); //设置文章信息列表。
       mAdapter.notifyDataSetChanged(); //通知数据变更。
   } //private void applyBuiltinShortcuts()
@@ -432,8 +430,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
   public void setBuiltinShortcuts (ArrayList<ArticleInfo> builtinShortcuts )
   {
       this.builtinShortcuts= builtinShortcuts;
-
-      Log.d(TAG, "setBuiltinShortcuts, builtinShortcuts length: "  + builtinShortcuts.size()); // Debug.
 
       if (mAdapter!=null)
       {
@@ -475,8 +471,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
   public void setInternationalizationDataPackageNameMap(HashMap<String, String>  internationalizationDataPackageNameMap)
   {
     this.internationalizationDataPackageNameMap=internationalizationDataPackageNameMap;
-
-    Log.d(TAG, "setInternationalizationDataPackageNameMap, map: " + this.internationalizationDataPackageNameMap); // Debug.
   }
     
   /**
@@ -705,11 +699,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
   */
   public void  setApplicationInformationAdapter (ApplicationInformationAdapter mAdapter)
   {
-      Log.d(TAG, "setApplicationInformationAdapter, mAdapter: "+ mAdapter); // Debug.
-
       this.mAdapter=mAdapter;
-
-      Log.d(TAG, "setApplicationInformationAdapter, mAdapter: "+ mAdapter); // Debug.
 
       if (shortcutInfos!=null) // 快捷方式列表存在
       {
@@ -1180,8 +1170,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
         File photoDirecotry= new File(photoDirectoryPath); //照片目录。
 
-        Log.d(TAG,"findRandomPhotoFile,photo directory:"+photoDirectoryPath); //Debug.
-
         IOFileFilter fileFilter= TrueFileFilter.INSTANCE; //文件过滤器。
 
         IOFileFilter dirFilter= TrueFileFilter.INSTANCE; //文件过滤器。
@@ -1192,8 +1180,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
             Collection<File> photoFiles= FileUtils.listFiles(photoDirecotry, fileFilter, dirFilter); //列出全部文件。
 
             Random random=new Random(); //随机数生成器。
-
-//            LogHelper.d(TAG,"findRandomPhotoFile,photo amount:"+photoFiles.size()); //Debug.
 
             if (photoFiles.size()>0) //有照片文件。
             {
@@ -1246,16 +1232,12 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
       File filesDir=getFilesDir();
 
-      Log.d(TAG, "1459, findRandomPhotoFile, files dir: "+ filesDir); //Debug.
-
       if (filesDir==null) //该目录不存在。
       {
       } //if (filesDir==null) //该目录不存在。
       else //该目录存在。
       {
         result=new File(filesDir.getAbsolutePath()+"/voicePackageNameMap.proto"); //指定文件名。
-
-        Log.d(TAG, "1469, findRandomPhotoFile, files exists: "+ result.exists() + ", size: " + result.length()); //Debug.
 
         if (result.exists()) //文件存在。
         {
@@ -1265,8 +1247,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
           try
           {
             boolean createResult=result.createNewFile(); //创建文件。
-
-            Log.d(TAG, "findRandomPhotoFile, create file result: " + createResult); //Debug.
           }
           catch (IOException e)
           {
@@ -1304,7 +1284,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
       } //else  //尚未初始化。
       long endTimestamp=System.currentTimeMillis(); // 记录开始时间戳。
       Log.w(TAG, "assessInitializeMsc, 1649, leave assessInitializeMsc, timestamp: " + System.currentTimeMillis()); //Debug.
-      Log.d(TAG, "assessInitializeMsc, 1650, time in assessInitializeMsc: " + (endTimestamp-startTimestamp)); // 报告，onCreate 所花的时间。
     } //private void assessInitializeMsc()
 
     /**
@@ -1787,14 +1766,10 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
                 {
                     Collection<PackageItemInfo> packageItemInfos=(Collection<PackageItemInfo>) voicePackageNameMap.get(voiceCommandString); //获取集合信息
 
-                    Log.d(TAG, "findVoiceTargetMapPackageName, result: " + voiceRecognizeResultString + ",  in map, package item info length: " + packageItemInfos.size() );
-
                     for(PackageItemInfo packageItemInfo: packageItemInfos) //一个个地输出
                     {
                         String packageName=packageItemInfo.packageName; //获取包名。
                         String activityName=packageItemInfo.name; //获取活动名
-
-                        Log.d(TAG, "findVoiceTargetMapPackageName, result: " + voiceRecognizeResultString + ",  iterate, package name: " + packageName );
 
                         if ((packageName.equals(voiceCommandPackage)) && (activityName.equals(voiceCommandActivityName))) //包名和类名都一致
                         {
@@ -1879,8 +1854,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
      */
     private void pinShortcut(ShortcutInfo shortcutInfo)
     {
-        Log.d(TAG, "pinShortcut. This: " + this); //Debug.
-
         mAdapter.addShortcut(shortcutInfo); //向适配器添加快捷方式。
 
         mAdapter.updateItemPositionMap(); //整体更新条目的位置映射
@@ -1915,8 +1888,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
      */
     public void showNewlyAddedPackage(int uid)
     {
-      Log.d(TAG, "1848, showNewlyAddedPackage"); //Debug
-
       PackageManager packageManager=getPackageManager(); //获取软件包管理器。
 
       String[] packageNames=packageManager.getPackagesForUid(uid); //获取对应的软件包列表。
@@ -1946,8 +1917,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
                   HxLauncherApplication hxLauncherApplication=HxLauncherApplication.getInstance(); //获取应用程序对象
 
                   HashMap<String, Drawable> activityIconMap=hxLauncherApplication.getLaunchIconMap(); //获取启动图标缓存
-
-                  Log.d(TAG, "1862, showNewlyAddedPackage, package name: " + packageName + ", activity name: " + activityName + ", removing icon cache"); //Debug
 
                   activityIconMap.remove(packageName + "/" + activityName); //删除对应的映射
                 } //for(AcitivityInfo currentActivity: packageInfo.activities) //一个个活动地处理
@@ -2241,8 +2210,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
         String vadEos=mIat.getParameter(SpeechConstant.VAD_EOS); //获取默认的后端点时间。
 
-        Log.d(TAG,"setParam, default vad eos: "+vadEos); //Debug.
-
         mIat.setParameter(SpeechConstant.VAD_EOS, "100"); //后端点时间长度。
 
         mIat.setParameter(SpeechConstant.ASR_PTT, "0"); //不要标点符号。https://www.xfyun.cn/doc/asr/voicedictation/Android-SDK.html#_2%E3%80%81sdk%E9%9B%86%E6%88%90%E6%8C%87%E5%8D%97
@@ -2326,8 +2293,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
             androidLocaleName=locale1.toString(); //获取语系名字。
 
-            Log.d(TAG, "setLanguageAndAccentParameters, candidate language: " + androidLocaleName+ ", locale counter: " + localeCounter); //Debug.
-
             if (androidLocaleName.startsWith("zh_CN")) //简体中文。
             {
               mIat.setParameter(SpeechConstant.LANGUAGE,"zh_cn");
@@ -2399,13 +2364,10 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
     */
   private boolean findVoiceTargetApplicationNameAndLaunch()
   {
-    Log.w(TAG, "findVoiceTargetApplicationNameAndLaunch, 1188, timestamp: " + System.currentTimeMillis()); //Debug.
     boolean foundActivity=false; //返回结果，是否命中了活动。
     String Result = ""; // 结果。
 
     String maskFileName=""; //获取掩码图片文件名。
-//       Log.w(TAG, "findVoiceTargetApplicationNameAndLaunch, 1193, result: " + voiceRecognizeResultString); //Debug.
-//       Log.w(TAG, "findVoiceTargetApplicationNameAndLaunch, 1193, map: " + activityLabelPackageItemInfoMap); //Debug.
 
     boolean directHit=false; //是否直接命中了识别结果对应的应用程序。
 
@@ -2415,9 +2377,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
     if (packageItemInfos!=null) //存在映射目标
     {
-      Log.d(TAG, "findVoiceTargetApplicationNameAndLaunch, collection size: " + packageItemInfos.size()); //Debug.
-      Log.d(TAG, "findVoiceTargetApplicationNameAndLaunch, collection : " + packageItemInfos); //Debug.
-
       Object packageItemInfoObject=packageItemInfos.toArray()[0]; //获取第一个
 
       PackageItemInfo packageItemInfo= ((PackageItemInfo)packageItemInfoObject); //根据识别结果从映射中寻找。
@@ -2434,7 +2393,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
         {
           directHit=true; //直接命中了识别结果对应的应用程序。
 
-          Log.w(TAG, "findVoiceTargetApplicationNameAndLaunch, 1234, timestamp: " + System.currentTimeMillis()); //Debug.
           foundActivity=true; //命中了。
 
           Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
@@ -2442,7 +2400,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
           Intent activitylaunchIntent=new Intent(mainIntent);
           activitylaunchIntent.setClassName(packageItemInfo.packageName, packageItemInfo.name); //设置类名。
-          Log.w(TAG, "findVoiceTargetApplicationNameAndLaunch, 1239, timestamp: " + System.currentTimeMillis()); //Debug.
 
           scrollToIconPosition(packageItemInfo.packageName, packageItemInfo.name); //滚动到图标所在的位置。
 
@@ -2471,18 +2428,11 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
         if (mappedPackageName!=null) //存在映射。
         {
-          Log.w(TAG, "findVoiceTargetApplicationNameAndLaunch, 1274, timestamp: " + System.currentTimeMillis()); //Debug.
           directHit=true; //直接命中了识别结果对应的应用程序。
 
           foundActivity=true; //命中了。
 
-          Log.w(TAG, "findVoiceTargetApplicationNameAndLaunch, 1280, timestamp: " + System.currentTimeMillis()); //Debug.
-          Log.i(TAG, "findVoiceTargetApplicationNameAndLaunch, hit by internationalization name: " + voiceRecognizeResultString); //Debug.
-
-          //                launchApplication(launchIntent); //启动应用。
           launchShortcut(mappedPackageName); //启动快捷方式。
-
-          Log.w(TAG, "findVoiceTargetApplicationNameAndLaunch, 1285, timestamp: " + System.currentTimeMillis()); //Debug.
         } //if (applicationLabel.equals(voiceRecognizeResultString)) //正是等于识别结果。
       } //if (shortcutTitleInfoMap!=null) //映射本身存在。
     } //else  //未命中活动。
@@ -2490,23 +2440,16 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
     //根据国际化名字的映射来匹配：
     if (foundActivity) //命中了活动，则不需要再根据国际化名字来匹配。
     {
-      Log.w(TAG, "findVoiceTargetApplicationNameAndLaunch, 1254, timestamp: " + System.currentTimeMillis()); //Debug.
     } //if (foundActivity) //命中了活动，则不需要再根据国际化名字来匹配。
     else //未命中活动，尝试根据国际化名字来匹配。
     {
       //按照应用程序的国际化名字来匹配：
-      Log.w(TAG, "findVoiceTargetApplicationNameAndLaunch, 2707, timestamp: " + System.currentTimeMillis()); //Debug.
       //注意，目前还是以应用程序包名为单位，后面要改成以具体活动名字为单位：
 
       String mappedPackageName=internationalizationDataPackageNameMap.get(voiceRecognizeResultString); //从映射中寻找包名。
 
       if (mappedPackageName!=null) //存在映射。
       {
-        Log.w(TAG, "findVoiceTargetApplicationNameAndLaunch, 2714, timestamp: " + System.currentTimeMillis()); //Debug.
-
-        Log.w(TAG, "findVoiceTargetApplicationNameAndLaunch, 2719, timestamp: " + System.currentTimeMillis()); //Debug.
-        Log.i(TAG, "findVoiceTargetApplicationNameAndLaunch, hit by internationalization name: " + voiceRecognizeResultString); //Debug.
-
         PackageManager packageManager=getPackageManager(); //获取软件包管理器。
 
         Intent launchIntent= packageManager.getLaunchIntentForPackage(mappedPackageName); //获取当前软件包的启动意图。
@@ -2522,11 +2465,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
           launchApplication(launchIntent); //启动应用。
         } // if (launchIntent!=null) // The launch intent exists
-
-        Log.w(TAG, "findVoiceTargetApplicationNameAndLaunch, 2733, timestamp: " + System.currentTimeMillis()); //Debug.
       } //if (applicationLabel.equals(voiceRecognizeResultString)) //正是等于识别结果。
-
-      Log.w(TAG, "findVoiceTargetApplicationNameAndLaunch, 2736, timestamp: " + System.currentTimeMillis()); //Debug.
     } //else //未命中活动，尝试根据国际化名字来匹配。
 
     if (directHit) //是直接命中了应用程序。
@@ -2595,8 +2534,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
     float y=hitApplicationIcon.getY()+voiceAssistantLayout.getY();
 
     View viewObject=launcher_activity.findViewById(R.id.loveAnimation);
-
-    Log.d(TAG, "animateHitApplication: view object: " + viewObject); //Debug.
 
     if (loveAnimation!=null) //找到了视图
     {
@@ -2703,7 +2640,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
     long time10MinutesAgo = currentTimeMillis - (15 * 1000); // 15 seconds ago
 
     UsageEvents usageEvents = usageStatsManager.queryEvents(time10MinutesAgo, currentTimeMillis);
-    Log.d(TAG, CodePosition.newInstance().toString() + ", events: "  + usageEvents + ", has next event?:" + usageEvents.hasNextEvent()); //Debug.
 
     // if (usageStatsList!=null && !usageStatsList.isEmpty())
     String packageName = null;
@@ -2716,7 +2652,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
       {
         UsageEvents.Event lastAppUsageStatsiter = new UsageEvents.Event();
         usageEvents.getNextEvent(lastAppUsageStatsiter);
-        Log.d(TAG, CodePosition.newInstance().toString() + ", event: "  + lastAppUsageStatsiter + ", type: " + lastAppUsageStatsiter.getEventType()); //Debug.
 
         int eventType = lastAppUsageStatsiter.getEventType();
 
@@ -2724,7 +2659,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
         {
           packageName = lastAppUsageStatsiter.getPackageName();
           activityName = lastAppUsageStatsiter.getClassName();
-          Log.d(TAG, CodePosition.newInstance().toString() + ", package name: "  + packageName + ", calss name: " + activityName + ", type: " + eventType); //Debug.
         } // if (lastAppUsageStatsiter.getEventType() == UsageEvents.Event.ACTIVITY_STOPPED) // Stopped.
 
       } // for(UsageStats lastAppUsageStats : usageStatsList)
@@ -2744,41 +2678,33 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
   private boolean hasUsageStatsPermission()
   {
     boolean result = false; // The result;
-    Log.d(TAG, CodePosition.newInstance().toString()); //Debug.
     UsageStatsManager usageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
     if (usageStatsManager == null)
     {
     }
     else // The usage stats manager exists.
     {
-      Log.d(TAG, CodePosition.newInstance().toString()); //Debug.
-
       long currentTimeMillis = System.currentTimeMillis();
       long time10MinutesAgo = currentTimeMillis - (10 * 60 * 1000); // 10 minutes ago
 
-      Log.d(TAG, CodePosition.newInstance().toString()); //Debug.
       try
       {
         // 尝试调用需要权限的方法
         Map<String, UsageStats> usageMap = usageStatsManager.queryAndAggregateUsageStats(time10MinutesAgo, currentTimeMillis);
-        Log.d(TAG, CodePosition.newInstance().toString()); //Debug.
 
         if (usageMap!=null) // Got the map successfully.
         {
           if (usageMap.size() > 0) // Their are items in the map.
           {
-            Log.d(TAG, CodePosition.newInstance().toString()); //Debug.
             result = true;
           } // if (usageMap.size() > 0) // Their are items in the map.
         } // if (usageMap!=null) // Got the map successfully.
       }
       catch (SecurityException e)
       {
-        Log.d(TAG, CodePosition.newInstance().toString()); //Debug.
         // 捕获 SecurityException 表明权限未被授予
         // return false;
       }
-      Log.d(TAG, CodePosition.newInstance().toString()); //Debug.
     } // else // The usage stats manager exists.
 
     return result;
@@ -2806,20 +2732,16 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
   private void requestUsageStatsPermission()
   {
-    Log.d(TAG, CodePosition.newInstance().toString()); //Debug.
     if (!hasUsageStatsPermission())
     {
       // 如果权限未被授予，则引导用户前往设置页面
       showSettingsScreen();
-      Log.d(TAG, CodePosition.newInstance().toString()); //Debug.
     }
     else
     {
       // 如果权限已经被授予，则可以开始使用它
-      Log.d(TAG, CodePosition.newInstance().toString()); //Debug.
       onPermissionGranted();
     }
-    Log.d(TAG, CodePosition.newInstance().toString()); //Debug.
   }
 
   /**
@@ -2889,8 +2811,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
       {
         String internationalizationName=internationalizationData.get(foundPackageName); //获取国际化名字。
 
-        Log.d(TAG,"tryDownloadApkAssociatedToPackage, package url: "+ internationalizationName+ ", package name: " + foundPackageName); //Debug.
-
         if (internationalizationName!=null) //有国际化名字。
         {
           foundUrl=true;
@@ -2912,8 +2832,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
     {
       PackageInformationManager packageInformatinManager = new PackageInformationManager(); // The package information manager.
       boolean installed = packageInformatinManager.checkInstalled(packageName); // 检查该应用是不是已经安装了。
-
-      Log.d(TAG,"requestDownloadPackage, installed: "+ installed + ", url: " + internationalizationName + ", appliation name: " + applicationName + ", package name: " + packageName); //Debug.
 
       if (installed) // 该应用已经安装。
       {
@@ -2942,7 +2860,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
         if (packageName!=null) // The package name exists
         {
           String iconUrl=application.getIconForPackage(packageName); // Get icon url.
-          Log.d(TAG, CodePosition.newInstance().toString()+  ", packgage name: " + packageName + ", icon url: " + iconUrl); // Debug.
           
           Glide.with(application).load(iconUrl).placeholder(R.drawable.vector_66_11).into(applicationIconrightimageView2); //显示图标。
 
@@ -3125,8 +3042,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
         voiceCommandHitDataObject.setVoiceCommandSourceType(voiceCommandSourceType);
 
         voiceCommandHitDataStack.push(voiceCommandHitDataObject); //加入栈中
-
-        Log.d(TAG, "rememberVoiceCommandHitData, stack size: " + voiceCommandHitDataStack.size()); //Debug.
     } //private boolean rememberVoiceCommandHitData(String voiceRecognizeResultString, String packageName, String activityName, LauncherIconType activityIconType)
 
     /**
@@ -3200,8 +3115,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
               {
                 rememberVoiceCommandHitData(voiceRecognizeResultString, packageName, activityName, ActivityIconType, LocalVoiceCommandMap); //记录语音识别命中应用的数据
               } // else // Not regret.
-
-              Log.d(TAG, "findVoiceTargetMapApplicationAndLaunch, calling reportVoiceCommandHitData, icon title: " + activityTitle); //Debug.
 
               voiceCommandHitDataReporter.reportVoiceCommandHitData(voiceRecognizeResultString, packageName, activityName, recordSoundFilePath, ActivityIconType, activityTitle); // Report voice command hit data. Hit activity.
 
@@ -3280,7 +3193,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
         String packageName=shortcutInfo.getPackage(); //获取包名。
 
-        Log.d(TAG, CodePosition.newInstance().toString()); // Debug.
         hideIconList(); //隐藏图标列表
 
         launchShortcut(packageName, shortcutId); //启动快捷方式。
@@ -3332,14 +3244,11 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
       HxLauncherApplication hxLauncherApplication = HxLauncherApplication.getInstance(); //获取应用程序对象。
       boolean result=false; //结果
 
-      Log.d(TAG, "launchApplication, launch intent: " + launchIntent); //Debug.
       try //尝试启动活动，并且捕获可能的异常。
       {
         if (launchIntent!=null) //启动意图存在。
         {
           boolean allowedToLaunch = hxLauncherApplication.checkLaunchCoolDownTime(launchIntent); //检查启动的冷却时间。
-
-          Log.d(TAG, "launchApplication, allowed to launch: " + allowedToLaunch); //Debug.
 
           if (allowedToLaunch) //允许启动。
           {
@@ -3378,7 +3287,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
         result=true; //启动成功
 
-        Log.d(TAG, CodePosition.newInstance().toString()); // Debug.
         hideIconList(); //隐藏图标列表
       } //try //尝试启动活动，并且捕获可能的异常。
       catch (ActivityNotFoundException exception)
@@ -3472,8 +3380,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
       HxLauncherApplication application=HxLauncherApplication.getInstance(); //获取应用程序对象。
 
       Set<String> wakeLockPackageNameSet=application.getWakeLockPackageNameSetData().getWakeLockPackageNameSet(); //获取唤醒锁应用包名集合数据。
-
-      Log.d(TAG,"checkAndAquireWakeLock, package name: "+packageName); //Debug.
 
       if (wakeLockPackageNameSet.contains(packageName)) //在唤醒锁名单中。
       {
