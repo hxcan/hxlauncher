@@ -33,7 +33,7 @@ import com.koushikdutta.ion.ProgressCallback;
 import com.stupidbeauty.hxlauncher.application.HxLauncherApplication;
 import com.stupidbeauty.hxlauncher.bean.ApplicationListData;
 import com.stupidbeauty.hxlauncher.rpc.CloudRequestorZzaqwb;
-import com.stupidbeauty.hxlauncher.LauncherActivity;
+import com.stupidbeauty.hxlauncher.InstallConfirmActivity;
 import com.stupidbeauty.hxlauncher.R;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -83,7 +83,7 @@ public class DownloadRequestor
   private static final String PACKAGE_INSTALLED_ACTION = "com.example.android.apis.content.SESSION_API_PACKAGE_INSTALLED";
 
   private Notification continiusNotification=null; //记录的通知
-  private LauncherActivity launcherActivity=null; // 启动活动。
+  private Activity launcherActivity=null; // 启动活动。
   private int NOTIFICATION = 84951; //通知编号。陈欣
   private VoiceUi voiceUi=null; // 语音交互对象。
 
@@ -251,7 +251,7 @@ public class DownloadRequestor
 
       // Create an install status receiver.
       FileLogger.d(TAG, "创建 PendingIntent，packageName=" + baseApplication.getPackageName());
-      Intent intent = new Intent(baseApplication, LauncherActivity.class);
+      Intent intent = new Intent(baseApplication, InstallConfirmActivity.class);
       intent.setAction(PACKAGE_INSTALLED_ACTION);
 
       PendingIntent pendingIntent = PendingIntent.getActivity(baseApplication, 0, intent, PendingIntent.FLAG_MUTABLE);
@@ -744,7 +744,7 @@ public class DownloadRequestor
   } // public void cancelDownload() // Cancel download.
 
 
-    public void requestDownloadUrl(String url, String refererUrl, String applicatinName, String packageName, LauncherActivity launcherActivity)
+    public void requestDownloadUrl(String url, String refererUrl, String applicatinName, String packageName, Activity launcherActivity)
     {
       this.launcherActivity=launcherActivity;
       this.packageName=packageName;
