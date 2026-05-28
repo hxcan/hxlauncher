@@ -33,6 +33,7 @@ import com.koushikdutta.ion.ProgressCallback;
 import com.stupidbeauty.hxlauncher.application.HxLauncherApplication;
 import com.stupidbeauty.hxlauncher.bean.ApplicationListData;
 import com.stupidbeauty.hxlauncher.rpc.CloudRequestorZzaqwb;
+import com.stupidbeauty.hxlauncher.InstallConfirmActivity;
 import com.stupidbeauty.hxlauncher.LauncherActivity;
 import com.stupidbeauty.hxlauncher.R;
 import java.io.DataInputStream;
@@ -251,7 +252,7 @@ public class DownloadRequestor
 
       // Create an install status receiver.
       FileLogger.d(TAG, "创建 PendingIntent，packageName=" + baseApplication.getPackageName());
-      Intent intent = new Intent(baseApplication, LauncherActivity.class);
+      Intent intent = new Intent(baseApplication, InstallConfirmActivity.class);
       intent.setAction(PACKAGE_INSTALLED_ACTION);
 
       PendingIntent pendingIntent = PendingIntent.getActivity(baseApplication, 0, intent, PendingIntent.FLAG_MUTABLE);
@@ -319,7 +320,7 @@ public class DownloadRequestor
 //             intent.setData(getApkUri("HelloActivity.apk"));
 //             intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 //             startActivity(intent);
-//    
+//   
 
     HxLauncherApplication baseApplication = HxLauncherApplication.getInstance(); //获取应用程序对象。
         
@@ -648,7 +649,7 @@ public class DownloadRequestor
 
     fileDownloadFuture= Ion.with(baseApplication)
       .load(targetUrl)
-      .setTimeout(15000) //Set the time out to be 15s.
+      .setTimeout(15000) //Set the time out to 15s.
       // have a ProgressBar get updated automatically with the percent
       //                .progressBar(ionprogressBar1)
       // can also use a custom callback
