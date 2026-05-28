@@ -34,6 +34,7 @@ import com.stupidbeauty.hxlauncher.application.HxLauncherApplication;
 import com.stupidbeauty.hxlauncher.bean.ApplicationListData;
 import com.stupidbeauty.hxlauncher.rpc.CloudRequestorZzaqwb;
 import com.stupidbeauty.hxlauncher.InstallConfirmActivity;
+import com.stupidbeauty.hxlauncher.LauncherActivity;
 import com.stupidbeauty.hxlauncher.R;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -83,7 +84,7 @@ public class DownloadRequestor
   private static final String PACKAGE_INSTALLED_ACTION = "com.example.android.apis.content.SESSION_API_PACKAGE_INSTALLED";
 
   private Notification continiusNotification=null; //记录的通知
-  private Activity launcherActivity=null; // 启动活动。
+  private LauncherActivity launcherActivity=null; // 启动活动。
   private int NOTIFICATION = 84951; //通知编号。陈欣
   private VoiceUi voiceUi=null; // 语音交互对象。
 
@@ -744,7 +745,7 @@ public class DownloadRequestor
   } // public void cancelDownload() // Cancel download.
 
 
-    public void requestDownloadUrl(String url, String refererUrl, String applicatinName, String packageName, Activity launcherActivity)
+    public void requestDownloadUrl(String url, String refererUrl, String applicatinName, String packageName, LauncherActivity launcherActivity)
     {
       this.launcherActivity=launcherActivity;
       this.packageName=packageName;
