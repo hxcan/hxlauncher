@@ -70,20 +70,10 @@
       </intent-filter>
     </activity>
     <activity
-      android:name="com.stupidbeauty.hxlauncher.activity.PinShortcutConfirmActivity" 
-      android:launchMode="singleInstance"
-      android:windowSoftInputMode="stateAlwaysHidden" 
-      android:exported="true"
-    >
-      <intent-filter>
-        <action android:name="android.content.pm.action.CONFIRM_PIN_SHORTCUT"/>
-      </intent-filter>
-    </activity>
-    <activity
       android:name="com.stupidbeauty.hxlauncher.InstallConfirmActivity" 
       android:launchMode="singleInstance"
       android:windowSoftInputMode="stateAlwaysHidden" 
-      android:theme="@android:style/Theme.Translucent.NoTitleBar"
+      android:theme="@style/Theme.AppCompat.Light.Dialog.Alert"
       android:exported="false"
     >
     </activity>
