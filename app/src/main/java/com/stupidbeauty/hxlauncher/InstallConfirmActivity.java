@@ -269,6 +269,10 @@ public class InstallConfirmActivity extends Activity {
                 intent.addFlags(Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 
+                // 明确指定使用 MIUI 的软件包安装程序，避免被其他应用（如快手）拦截
+                intent.setPackage("com.miui.packageinstaller");
+                
+                Log.d(TAG, "installViaTraditionalIntent: Intent package: " + intent.getPackage());
                 Log.d(TAG, "installViaTraditionalIntent: Intent flags: " + intent.getFlags());
                 Log.d(TAG, "installViaTraditionalIntent: Intent data: " + intent.getData());
                 Log.d(TAG, "installViaTraditionalIntent: Intent type: " + intent.getType());
@@ -279,6 +283,11 @@ public class InstallConfirmActivity extends Activity {
                 apkUri = Uri.fromFile(apkFile);
                 intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                
+                // 明确指定使用 MIUI 的软件包安装程序
+                intent.setPackage("com.miui.packageinstaller");
+                
+                Log.d(TAG, "installViaTraditionalIntent: Intent package: " + intent.getPackage());
             }
             
             Log.d(TAG, "installViaTraditionalIntent: Starting activity with intent: " + intent);
@@ -286,7 +295,7 @@ public class InstallConfirmActivity extends Activity {
             startActivity(intent);
             
             Log.d(TAG, "installViaTraditionalIntent: Activity started successfully");
-            Toast.makeText(this, "已打开文件管理器，请选择 APK 文件并点击\"安装\"", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "正在打开软件包安装程序...", Toast.LENGTH_LONG).show();
             
             // 不在这里 finish()，让用户完成安装操作
             // finish();
