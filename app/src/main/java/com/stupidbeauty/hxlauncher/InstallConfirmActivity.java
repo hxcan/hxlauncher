@@ -263,20 +263,25 @@ public class InstallConfirmActivity extends Activity {
                 String authority = getPackageName() + ".provider";
                 Log.d(TAG, "installViaTraditionalIntent: Using FileProvider with authority: " + authority);
                 apkUri = androidx.core.content.FileProvider.getUriForFile(this, authority, apkFile);
+                
+                // 添加明确的权限授予标志，确保安装程序可以访问 FileProvider
                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                intent.addFlags(Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                
+                Log.d(TAG, "installViaTraditionalIntent: Intent flags: " + intent.getFlags());
+                Log.d(TAG, "installViaTraditionalIntent: Intent data: " + intent.getData());
+                Log.d(TAG, "installViaTraditionalIntent: Intent type: " + intent.getType());
+                
             } else {
                 // Android 7.0 以下直接使用 file:// URI
                 Log.d(TAG, "installViaTraditionalIntent: Using file:// URI (Android < 7.0)");
                 apkUri = Uri.fromFile(apkFile);
+                intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             }
             
-            intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            
             Log.d(TAG, "installViaTraditionalIntent: Starting activity with intent: " + intent);
-            Log.d(TAG, "installViaTraditionalIntent: Intent data: " + intent.getData());
-            Log.d(TAG, "installViaTraditionalIntent: Intent type: " + intent.getType());
-            Log.d(TAG, "installViaTraditionalIntent: Intent flags: " + intent.getFlags());
             
             startActivity(intent);
             
