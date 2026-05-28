@@ -125,7 +125,10 @@ public class InstallConfirmActivity extends Activity {
      */
     private boolean isMIUI() {
         try {
-            String prop = getPackageManager().getSystemProperty("ro.miui.ui.version.name", null);
+            // 使用反射访问 SystemProperties 类（隐藏 API）
+            Class<?> clazz = Class.forName("android.os.SystemProperties");
+            java.lang.reflect.Method method = clazz.getMethod("get", String.class, String.class);
+            String prop = (String) method.invoke(null, "ro.miui.ui.version.name", "");
             return prop != null && !prop.isEmpty();
         } catch (Exception e) {
             FileLogger.e(TAG, "isMIUI: failed to check MIUI version", e);
