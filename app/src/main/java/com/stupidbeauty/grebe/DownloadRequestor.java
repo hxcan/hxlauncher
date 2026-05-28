@@ -33,7 +33,7 @@ import com.koushikdutta.ion.ProgressCallback;
 import com.stupidbeauty.hxlauncher.application.HxLauncherApplication;
 import com.stupidbeauty.hxlauncher.bean.ApplicationListData;
 import com.stupidbeauty.hxlauncher.rpc.CloudRequestorZzaqwb;
-import com.stupidbeauty.hxlauncher.InstallConfirmActivity;
+import com.stupidbeauty.hxlauncher.LauncherActivity;
 import com.stupidbeauty.hxlauncher.R;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -251,7 +251,7 @@ public class DownloadRequestor
 
       // Create an install status receiver.
       FileLogger.d(TAG, "创建 PendingIntent，packageName=" + baseApplication.getPackageName());
-      Intent intent = new Intent(baseApplication, InstallConfirmActivity.class);
+      Intent intent = new Intent(baseApplication, LauncherActivity.class);
       intent.setAction(PACKAGE_INSTALLED_ACTION);
 
       PendingIntent pendingIntent = PendingIntent.getActivity(baseApplication, 0, intent, PendingIntent.FLAG_MUTABLE);
