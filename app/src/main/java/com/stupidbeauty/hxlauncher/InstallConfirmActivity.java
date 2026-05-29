@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.FileProvider;
 import com.stupidbeauty.hxlauncher.utils.FileLogger;
 import com.stupidbeauty.codeposition.CodePosition;
 import java.io.File;
@@ -193,7 +194,7 @@ public class InstallConfirmActivity extends Activity {
                            "\n\n是否现在使用传统方式安装？")
                 .setPositiveButton("使用传统方式安装", (dialog, which) -> {
                     FileLogger.d(TAG, "showFallbackInstallDialog: User clicked 'Use traditional method'");
-                    installViaTraditionalIntent();
+                    installViaTraditionalIntent(packageName);
                 })
                 .setNegativeButton("稍后重试", (dialog, which) -> {
                     FileLogger.d(TAG, "showFallbackInstallDialog: User clicked 'Try later'");
@@ -219,24 +220,25 @@ public class InstallConfirmActivity extends Activity {
             // 延迟 500ms 后尝试传统安装，确保 Toast 能显示出来
             new android.os.Handler(getMainLooper()).postDelayed(() -> {
                 FileLogger.d(TAG, "showFallbackInstallDialog: Delayed task - calling installViaTraditionalIntent");
-                installViaTraditionalIntent();
+                installViaTraditionalIntent(packageName);
             }, 500);
         }
     }
     
     /**
      * 使用传统的 Intent.ACTION_VIEW 方式安装 APK
+     * @param packageName APK 的包名，用于精确查找 APK 文件路径
      */
-    private void installViaTraditionalIntent() {
-        FileLogger.d(TAG, "installViaTraditionalIntent: Starting traditional install method...");
+    private void installViaTraditionalIntent(String packageName) {
+        FileLogger.d(TAG, "installViaTraditionalIntent: Starting traditional install method for package: " + packageName);
         
-        // 从缓存中获取 APK 路径
-        String apkPath = getApkPathFromCache();
+        // 从缓存中获取 APK 路径（根据包名精确查找）
+        String apkPath = getApkPathFromCache(packageName);
         FileLogger.d(TAG, "installViaTraditionalIntent: APK path from cache: " + apkPath);
         
         if (apkPath == null || apkPath.isEmpty()) {
-            FileLogger.e(TAG, "installViaTraditionalIntent: APK path not found in cache");
-            Toast.makeText(this, "未找到 APK 文件，请重新下载后安装", Toast.LENGTH_LONG).show();
+            FileLogger.e(TAG, "installViaTraditionalIntent: APK path not found in cache for package: " + packageName);
+            Toast.makeText(this, "未找到 APK 文件（" + packageName + "），请重新下载后安装", Toast.LENGTH_LONG).show();
             finish();
             return;
         }
@@ -255,30 +257,43 @@ public class InstallConfirmActivity extends Activity {
             FileLogger.d(TAG, "installViaTraditionalIntent: Creating Intent.ACTION_VIEW intent...");
             
             Intent intent = new Intent(Intent.ACTION_VIEW);
-            Uri apkUri;
+            Uri apkUri = null;
             
+            // 首先尝试使用 FileProvider（Android 7.0+）
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                // Android 7.0+ 使用 FileProvider
-                String authority = getPackageName() + ".provider";
-                FileLogger.d(TAG, "installViaTraditionalIntent: Using FileProvider with authority: " + authority);
-                apkUri = androidx.core.content.FileProvider.getUriForFile(this, authority, apkFile);
-                
-                // 添加明确的权限授予标志，确保安装程序可以访问 FileProvider
-                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                intent.addFlags(Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                
-                // 明确指定使用 MIUI 的软件包安装程序，避免被其他应用（如快手）拦截
-                intent.setPackage("com.miui.packageinstaller");
-                
-                FileLogger.d(TAG, "installViaTraditionalIntent: Intent package: " + intent.getPackage());
-                FileLogger.d(TAG, "installViaTraditionalIntent: Intent flags: " + intent.getFlags());
-                FileLogger.d(TAG, "installViaTraditionalIntent: Intent data: " + intent.getData());
-                FileLogger.d(TAG, "installViaTraditionalIntent: Intent type: " + intent.getType());
-                
-            } else {
-                // Android 7.0 以下直接使用 file:// URI
-                FileLogger.d(TAG, "installViaTraditionalIntent: Using file:// URI (Android < 7.0)");
+                try {
+                    String authority = getPackageName() + ".provider";
+                    FileLogger.d(TAG, "installViaTraditionalIntent: Using FileProvider with authority: " + authority);
+                    apkUri = FileProvider.getUriForFile(this, authority, apkFile);
+                    
+                    if (apkUri != null) {
+                        // 添加明确的权限授予标志，确保安装程序可以访问 FileProvider
+                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        intent.addFlags(Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        
+                        // 明确指定使用 MIUI 的软件包安装程序，避免被其他应用（如快手）拦截
+                        intent.setPackage("com.miui.packageinstaller");
+                        
+                        FileLogger.d(TAG, "installViaTraditionalIntent: FileProvider URI: " + apkUri);
+                        FileLogger.d(TAG, "installViaTraditionalIntent: Intent package: " + intent.getPackage());
+                        FileLogger.d(TAG, "installViaTraditionalIntent: Intent flags: " + intent.getFlags());
+                        FileLogger.d(TAG, "installViaTraditionalIntent: Intent data: " + intent.getData());
+                        FileLogger.d(TAG, "installViaTraditionalIntent: Intent type: " + intent.getType());
+                    } else {
+                        FileLogger.w(TAG, "installViaTraditionalIntent: FileProvider returned null, falling back to Uri.fromFile()");
+                        apkUri = null; // 强制使用回退方案
+                    }
+                } catch (Exception e) {
+                    FileLogger.e(TAG, "installViaTraditionalIntent: FileProvider failed: " + e.getMessage(), e);
+                    FileLogger.w(TAG, "installViaTraditionalIntent: Falling back to Uri.fromFile()");
+                    apkUri = null; // 强制使用回退方案
+                }
+            }
+            
+            // 如果 FileProvider 失败或 Android < 7.0，使用传统的 file:// URI
+            if (apkUri == null) {
+                FileLogger.d(TAG, "installViaTraditionalIntent: Using file:// URI (Android < 7.0 or FileProvider failed)");
                 apkUri = Uri.fromFile(apkFile);
                 intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -286,10 +301,20 @@ public class InstallConfirmActivity extends Activity {
                 // 明确指定使用 MIUI 的软件包安装程序
                 intent.setPackage("com.miui.packageinstaller");
                 
+                FileLogger.d(TAG, "installViaTraditionalIntent: Fallback URI: " + apkUri);
                 FileLogger.d(TAG, "installViaTraditionalIntent: Intent package: " + intent.getPackage());
+                FileLogger.d(TAG, "installViaTraditionalIntent: Intent data: " + intent.getData());
+                FileLogger.d(TAG, "installViaTraditionalIntent: Intent type: " + intent.getType());
             }
             
-            FileLogger.d(TAG, "installViaTraditionalIntent: Starting activity with intent: " + intent);
+            // 如果没有设置 data 和 type，手动设置
+            if (intent.getData() == null) {
+                FileLogger.w(TAG, "installViaTraditionalIntent: Intent data is null, setting manually...");
+                intent.setDataAndType(Uri.fromFile(apkFile), "application/vnd.android.package-archive");
+            }
+            
+            FileLogger.d(TAG, "installViaTraditionalIntent: Final Intent: " + intent);
+            FileLogger.d(TAG, "installViaTraditionalIntent: Starting activity...");
             
             startActivity(intent);
             
@@ -309,11 +334,13 @@ public class InstallConfirmActivity extends Activity {
     
     /**
      * 从缓存中获取 APK 路径
+     * @param packageName APK 的包名，用于精确查找
+     * @return APK 文件路径，如果找不到则返回 null
      */
-    private String getApkPathFromCache() {
-        FileLogger.d(TAG, "getApkPathFromCache: Starting...");
+    private String getApkPathFromCache(String packageName) {
+        FileLogger.d(TAG, "getApkPathFromCache: Starting... looking for package: " + packageName);
         
-        // 尝试从 HxLauncherApplication 获取最近下载的 APK 路径
+        // 首先尝试从 HxLauncherApplication 的 HashMap 中根据包名精确查找
         try {
             com.stupidbeauty.hxlauncher.application.HxLauncherApplication app = 
                 com.stupidbeauty.hxlauncher.application.HxLauncherApplication.getInstance();
@@ -322,38 +349,65 @@ public class InstallConfirmActivity extends Activity {
             FileLogger.d(TAG, "getApkPathFromCache: apkFilePathMap size: " + (apkFilePathMap != null ? apkFilePathMap.size() : "null"));
             
             if (apkFilePathMap != null && !apkFilePathMap.isEmpty()) {
-                // 返回最后一个添加的 APK 路径
-                for (String path : apkFilePathMap.values()) {
+                // 首先尝试根据包名精确查找
+                if (apkFilePathMap.containsKey(packageName)) {
+                    String path = apkFilePathMap.get(packageName);
                     if (path != null && !path.isEmpty()) {
-                        FileLogger.d(TAG, "getApkPathFromCache: Found APK path: " + path);
+                        FileLogger.d(TAG, "getApkPathFromCache: Found APK path by package name: " + path);
                         return path;
                     }
                 }
+                
+                // 如果精确查找失败，尝试查找包含包名的路径（模糊匹配）
+                for (java.util.Map.Entry<String, String> entry : apkFilePathMap.entrySet()) {
+                    String key = entry.getKey();
+                    String path = entry.getValue();
+                    FileLogger.d(TAG, "getApkPathFromCache: Checking map entry - key: " + key + ", path: " + path);
+                    
+                    if (path != null && !path.isEmpty() && path.contains(packageName)) {
+                        FileLogger.d(TAG, "getApkPathFromCache: Found APK path by fuzzy match: " + path);
+                        return path;
+                    }
+                }
+                
+                FileLogger.w(TAG, "getApkPathFromCache: Package name not found in map, trying common directories...");
             }
         } catch (Exception e) {
             FileLogger.e(TAG, "getApkPathFromCache: Failed to get APK path from HxLauncherApplication", e);
         }
         
-        // 如果从映射中没找到，尝试常见的缓存目录
+        // 如果从 HashMap 中没找到，尝试常见的缓存目录
         FileLogger.d(TAG, "getApkPathFromCache: Trying common cache directories...");
         
-        String[] possiblePaths = {
-            getExternalCacheDir() + "/com.stupidbeauty.blindbox.apk",
-            getCacheDir() + "/com.stupidbeauty.blindbox.apk",
-            getExternalFilesDir(null) + "/com.stupidbeauty.blindbox.apk"
+        // 构建可能的文件名
+        String[] possibleFileNames = {
+            packageName + ".apk",
+            packageName.replace(".", "_") + ".apk",
+            packageName.replace(".", "-") + ".apk"
         };
         
-        for (String path : possiblePaths) {
-            File file = new File(path);
-            FileLogger.d(TAG, "getApkPathFromCache: Checking path: " + path + ", exists: " + file.exists());
+        String[] possibleDirs = {
+            getExternalCacheDir() != null ? getExternalCacheDir().getPath() : null,
+            getCacheDir() != null ? getCacheDir().getPath() : null,
+            getExternalFilesDir(null) != null ? getExternalFilesDir(null).getPath() : null
+        };
+        
+        for (String dir : possibleDirs) {
+            if (dir == null) continue;
             
-            if (file.exists()) {
-                FileLogger.d(TAG, "getApkPathFromCache: Found APK in common path: " + path);
-                return path;
+            for (String fileName : possibleFileNames) {
+                String fullPath = dir + "/" + fileName;
+                File file = new File(fullPath);
+                FileLogger.d(TAG, "getApkPathFromCache: Checking path: " + fullPath + ", exists: " + file.exists());
+                
+                if (file.exists()) {
+                    FileLogger.d(TAG, "getApkPathFromCache: Found APK in common path: " + fullPath);
+                    return fullPath;
+                }
             }
         }
         
-        FileLogger.w(TAG, "getApkPathFromCache: APK path not found in any location");
+        FileLogger.w(TAG, "getApkPathFromCache: APK path not found for package: " + packageName);
         return null;
     }
 }
