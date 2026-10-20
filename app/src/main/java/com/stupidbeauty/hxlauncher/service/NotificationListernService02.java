@@ -42,6 +42,9 @@ import com.stupidbeauty.lanime.Constants;
 import com.stupidbeauty.shutdownat2100.Sda2Message;
 import android.service.notification.NotificationListenerService;
 import com.stupidbeauty.hxlauncher.manager.NotificationDataManager;
+import com.stupidbeauty.shutdownat2100.helper.ShutDownAt2100Manager;
+import com.stupidbeauty.hxlauncher.logic.ShutDownAt2100Logic;
+import com.stupidbeauty.hxlauncher.interfaces.ShutDownAt2100LogicInterface;
 
 public class NotificationListernService02 extends NotificationListenerService
 {
@@ -52,7 +55,31 @@ public class NotificationListernService02 extends NotificationListenerService
   private static final String TAG = "NotificationListernService02"; //!< 输出调试信息时使用的标记。
   private static final String LanServiceName = "com.stupidbeauty.shutdownat2100.android"; //!<局域网服务名字。
   private static final int LanServicePort = 9521; //!<局域网服务的端口号。
-  
+
+  private ShutDownAt2100Logic shutDownAt2100Logic=null; //!< 21点关机逻辑。通知触发时检查是否到关机时间。
+
+  /**
+   * Stub implementation of ShutDownAt2100LogicInterface for use in NotificationListenerService.
+   * Service 里不需要触发 APK 下载流程（这是 LauncherActivity 的事）。
+   */
+  private static class ServiceShutDownAt2100LogicInterface implements ShutDownAt2100LogicInterface
+  {
+    @Override
+    public boolean requestDownloadApk(String foundPackageName)
+    {
+      return false; //!< 在 Service 上下文中不触发 APK 下载。
+    }
+  } //public boolean requestDownloadApk(String foundPackageName)
+
+  @Override
+  public void onCreate()
+  {
+    super.onCreate();
+    Log.d(TAG, CodePosition.newInstance().toString() + ", onCreate"); // Debug.
+
+    shutDownAt2100Logic=new ShutDownAt2100Logic(new ServiceShutDownAt2100LogicInterface()); //!< 初始化21点关机逻辑。
+  } //public void onCreate()
+
   public IBinder onBind(Intent intent)
   {
     Log.d(TAG, CodePosition.newInstance().toString() + ", intent: " + intent); // Debug.
@@ -65,22 +92,34 @@ public class NotificationListernService02 extends NotificationListenerService
   public void onNotificationPosted(StatusBarNotification sbn)
   {
     StatusBarNotification[] notificatoins = getActiveNotifications(); // Get the active notifications.
-    
+
     Log.d(TAG, CodePosition.newInstance().toString() + ", notifications amount: " + notificatoins.length); // Debug.
-    
+
     countNotifications(); // Count notificaitons.
+
+    // 通知变动时，触发21点关机检查。
+    if (shutDownAt2100Logic!=null) // Logic exists.
+    {
+      shutDownAt2100Logic.checkShutDownTime(); // Check shut down time.
+    } //if (shutDownAt2100Logic!=null) // Logic exists.
   } // public void onNotificationPosted(StatusBarNotification sbn)
 
-	@Override
-	/**
-	 * get to know about notification listener connected.
-	 */
-	public void onListenerConnected()
-	{
+@Override
+/**
+ * get to know about notification listener connected.
+ */
+public void onListenerConnected()
+{
     StatusBarNotification[] notificatoins = getActiveNotifications(); // Get the active notifications.
     
     Log.d(TAG, CodePosition.newInstance().toString() + ", notifications amount: " + notificatoins.length); // Debug.
     countNotifications(); // Count notificaitons.
+
+    // 监听连接建立时，也触发一次21点关机检查。
+    if (shutDownAt2100Logic!=null) // Logic exists.
+    {
+      shutDownAt2100Logic.checkShutDownTime(); // Check shut down time.
+    } //if (shutDownAt2100Logic!=null) // Logic exists.
   } //private void listenClipboard()
   
   public void onNotificationRemoved (StatusBarNotification sbn)
