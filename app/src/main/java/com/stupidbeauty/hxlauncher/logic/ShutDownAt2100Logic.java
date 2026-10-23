@@ -24,6 +24,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.os.Handler;
 import com.stupidbeauty.shutdownat2100.helper.ShutDownAt2100Manager;
+import com.stupidbeauty.shutdownat2100.helper.LaunchPolicy;
 import com.stupidbeauty.hxlauncher.logic.ShutDownAt2100Logic;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -274,7 +275,7 @@ public class ShutDownAt2100Logic
     
     private SetValuedMap<String, PackageItemInfo> voicePackageNameMapBultin; //!<内置的，语音识别结果与包条目信息之间的映射关系。
     private MultiMap<String, PackageItemInfo> activityLabelPackageItemInfoMap=new MultiValueMap<>(); //!<活动的标签，与活动本身信息之间的映射。
-    private HashMap<String, String> internationalizationDataPackageNameMap=new HashMap<>(); //映射。应用程序的国际化名字与包名之间的映射。
+    private HashMap<String, String> internationalizationDataPackageNameMap=new HashMap<>(); //!<映射。应用程序的国际化名字与包名之间的映射。
 
     private String voiceRecognizeResultString; //!<语音识别结果。
 
@@ -448,6 +449,28 @@ public class ShutDownAt2100Logic
         } // else // Currently, installed.
       } // if (exceededShutDownTime) // Exceeded
     } // public void checkShutDownTime()
+
+    /**
+     * 判断指定包名的应用当前是否允许启动。
+     * 
+     * 委托给 LaunchPolicy 进行双时段窗口判定：
+     * - 晚间窗口：关机时间点之前1小时
+     * - 早晨窗口：早晨阈值时间点之后1小时
+     * 
+     * @param packageName 应用包名
+     * @return 允许启动返回 true，禁止启动返回 false
+     */
+    public boolean isLaunchAllowed(String packageName)
+    {
+      HxLauncherApplication application = HxLauncherApplication.getInstance(); //获取应用程序对象。
+      Context context = application.getApplicationContext(); //获取上下文。
+      
+      boolean allowed = LaunchPolicy.isLaunchAllowed(context, packageName); //委托给 LaunchPolicy。
+      
+      Log.d(TAG, "isLaunchAllowed, package: " + packageName + ", allowed: " + allowed); //Debug.
+      
+      return allowed;
+    } //public boolean isLaunchAllowed(String packageName)
 
     /**
      * 保存映射。
