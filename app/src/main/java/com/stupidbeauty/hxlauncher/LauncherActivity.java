@@ -3253,6 +3253,16 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
       {
         if (launchIntent!=null) //启动意图存在。
         {
+          // 21点关机黑名单检查：必须在「是否跳转到解锁页」的决策之前。
+          // 否则被加了应用锁的应用会先进入解锁页，绕过黑名单限制。
+          String blackListPackageName=launchIntent.getComponent().getPackageName();
+          if (!shutDownAt2100Logic.isLaunchAllowed(blackListPackageName))
+          {
+            Log.d(TAG, "launchApplication, blocked by blacklist: " + blackListPackageName);
+            Toast.makeText(this, "当前时段不允许启动 " + blackListPackageName, Toast.LENGTH_SHORT).show();
+            return false;
+          }
+
           boolean allowedToLaunch = hxLauncherApplication.checkLaunchCoolDownTime(launchIntent); //检查启动的冷却时间。
 
           if (allowedToLaunch) //允许启动。
