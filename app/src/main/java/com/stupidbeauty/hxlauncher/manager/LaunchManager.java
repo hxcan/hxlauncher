@@ -13,6 +13,7 @@ import com.stupidbeauty.hxlauncher.Constants;
 import com.stupidbeauty.hxlauncher.application.HxLauncherApplication;
 import com.stupidbeauty.hxlauncher.bean.WakeLockPackageNameSetData;
 import com.stupidbeauty.hxlauncher.logic.ShutDownAt2100Logic;
+import com.stupidbeauty.hxlauncher.manager.PackageInformationManager;
 
 import java.util.HashSet;
 import java.util.Set;
