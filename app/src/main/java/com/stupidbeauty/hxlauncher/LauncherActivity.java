@@ -3281,7 +3281,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
       return launchManager;
     } //private LaunchManager getLaunchManager()
-    } //private void launchApplication(Intent launchIntent)
     
     /**
     * Assess to exclude from recent activites.
