@@ -428,9 +428,9 @@ public class LaunchManager
     {
       PackageManager packageManager=context.getPackageManager(); //获取软件包管理器。
 
-      PackageInfo packageInfo=packageManager.getApplicationInfo(packageName, 0); //获取应用程序信息。
+      android.content.pm.ApplicationInfo applicationInfo=packageManager.getApplicationInfo(packageName, 0); //获取应用程序信息。
 
-      return packageInfo.loadLabel(packageManager).toString(); //获取显示名。
+      return applicationInfo.loadLabel(packageManager).toString(); //获取显示名。
     } //try
     catch (PackageManager.NameNotFoundException e) //未找到该软件包。
     {
