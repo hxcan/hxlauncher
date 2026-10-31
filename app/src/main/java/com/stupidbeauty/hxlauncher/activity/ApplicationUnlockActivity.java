@@ -85,6 +85,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import com.stupidbeauty.hxlauncher.application.HxLauncherApplication;
+import com.stupidbeauty.hxlauncher.logic.ShutDownAt2100Logic;
+import com.stupidbeauty.hxlauncher.manager.LaunchManager;
 import com.stupidbeauty.hxlauncher.asynctask.VoiceAssociationDataSendTask;
 import com.stupidbeauty.hxlauncher.asynctask.VoiceShortcutAssociationDataSendTask;
 import com.stupidbeauty.hxlauncher.bean.ApplicationNameInternationalizationData;
@@ -165,6 +167,8 @@ public class ApplicationUnlockActivity extends Activity
   private TextView mHeaderTitle;
 
   private String packagename; //!< 包名。陈欣。
+  private ShutDownAt2100Logic shutDownAt2100Logic=null; //!< 21点关机逻辑。用于解锁后的黑名单二次校验。
+  private LaunchManager launchManager=null; //!< 启动管理器。
   private String activityName; //!< 活动名字。
 
   private int mCurrMsg = -1;
@@ -178,6 +182,21 @@ public class ApplicationUnlockActivity extends Activity
     
     if (password.equals(Constants.Literal.PASSWORD_CX)) // 密码正确。
     {
+      // 二次校验：21点关机黑名单。
+      // 解锁过程可能耗时较久，会跨越时间窗口边界
+      // （例如 20:59 进入解锁页，21:01 才输入密码，此时已进入窗口），
+      // 因此这里必须重新判定一次，不能依赖进入解锁页时的那次检查。
+      if (launchManager!=null)
+      {
+        LaunchManager.LaunchDecision decision=launchManager.decideLaunch(packagename);
+        if (!decision.allowed)
+        {
+          Log.d(TAG, "unlockAndLaunch, blocked by blacklist: " + packagename);
+          Toast.makeText(this, "当前时段不允许启动 " + packagename, Toast.LENGTH_SHORT).show();
+          return;
+        } //!<if (!decision.allowed)
+      } //!<if (launchManager!=null)
+
       Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
       mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
 
@@ -232,6 +251,9 @@ public class ApplicationUnlockActivity extends Activity
       mHeaderTitle = findViewById(R.id.rightTextoperationMethodactTitletextView2);
 
       Intent intent=getIntent(); // 获取意图。
+
+      shutDownAt2100Logic=new ShutDownAt2100Logic(this);
+      launchManager=new LaunchManager(this, shutDownAt2100Logic);
 
       processIntent(intent);
     } //protected void onCreate(Bundle savedInstanceState)
