@@ -87,6 +87,7 @@ import android.os.Bundle;
 import com.stupidbeauty.hxlauncher.application.HxLauncherApplication;
 import com.stupidbeauty.hxlauncher.logic.ShutDownAt2100Logic;
 import com.stupidbeauty.hxlauncher.manager.LaunchManager;
+import com.stupidbeauty.hxlauncher.interfaces.ShutDownAt2100LogicInterface;
 import com.stupidbeauty.hxlauncher.asynctask.VoiceAssociationDataSendTask;
 import com.stupidbeauty.hxlauncher.asynctask.VoiceShortcutAssociationDataSendTask;
 import com.stupidbeauty.hxlauncher.bean.ApplicationNameInternationalizationData;
@@ -169,6 +170,20 @@ public class ApplicationUnlockActivity extends Activity
   private String packagename; //!< 包名。陈欣。
   private ShutDownAt2100Logic shutDownAt2100Logic=null; //!< 21点关机逻辑。用于解锁后的黑名单二次校验。
   private LaunchManager launchManager=null; //!< 启动管理器。
+
+  /**
+   * ShutDownAt2100LogicInterface 的桩实现。
+   * 解锁页面不需要触发 APK 下载流程（那是 LauncherActivity 的事），这里只需要黑名单判定。
+   * 参考 NotificationListernService02 中的 ServiceShutDownAt2100LogicInterface 做法。
+   *\/
+  private static class UnlockShutDownAt2100LogicInterface implements ShutDownAt2100LogicInterface
+  {
+    @Override
+    public boolean requestDownloadApk(String foundPackageName)
+    {
+      return false; //!< 在解锁页面上下文中不触发 APK 下载。
+    }
+  } //!<public boolean requestDownloadApk(String foundPackageName)
   private String activityName; //!< 活动名字。
 
   private int mCurrMsg = -1;
@@ -252,7 +267,7 @@ public class ApplicationUnlockActivity extends Activity
 
       Intent intent=getIntent(); // 获取意图。
 
-      shutDownAt2100Logic=new ShutDownAt2100Logic(this);
+      shutDownAt2100Logic=new ShutDownAt2100Logic(new UnlockShutDownAt2100LogicInterface());
       launchManager=new LaunchManager(this, shutDownAt2100Logic);
 
       processIntent(intent);
