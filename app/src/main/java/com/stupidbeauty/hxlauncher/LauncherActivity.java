@@ -1328,7 +1328,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
         cancelRecognize(); //取消识别。
     } //public void onBackPressed()
 
-  /** 当前图标列表的显示模式。用于避免「语音识别模式 ↔ 图标点击模式」反复切换时相互打断动画。 */
   private enum IconListDisplayMode
   {
     ICON_LIST, //!< 当前显示图标列表。
@@ -1339,36 +1338,28 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
   private android.view.ViewPropertyAnimator iconListAnimator=null; //!< 当前正在运行的图标列表动画。用于打断时清理。
 
 
+
     /**
      * 显示图标列表
      */
     private void showIconList()
     {
       Log.d(TAG, CodePosition.newInstance().toString()); // Debug.
-
-      // 幂等保护：已经处于图标列表模式时，不再重复播放显示动画。
-      // 避免「语音识别模式 ↔ 图标点击模式」反复切换时产生多余的动画与状态抖动。
-      if (iconListDisplayMode==IconListDisplayMode.ICON_LIST)
+      if (iconListDisplayMode==IconListDisplayMode.ICON_LIST) //已经在图标列表模式，不重复播放动画。
       {
         FileLogger.d(TAG, "showIconList, already in ICON_LIST mode, skip redundant animation.");
         Log.d(TAG, "showIconList, already in ICON_LIST mode, skip redundant animation."); //Debug.
         gridIcon.setVisibility(View.GONE);
         return;
       } //if (iconListDisplayMode==IconListDisplayMode.ICON_LIST)
-
-      // 关键：取消尚未完成的隐藏动画。
-      // 否则 hideIconList() 挂着的 withEndAction 回调会在稍后把刚显示出来的列表又设成 INVISIBLE，
-      // 造成「显示→隐藏→显示→隐藏」的抽搐现象。
-      if (iconListAnimator!=null)
+      if (iconListAnimator!=null) //有尚未完成的动画，先取消掉。
       {
-        iconListAnimator.cancel();
+        iconListAnimator.cancel(); //取消掉未完成的隐藏动画，其 endAction 不会再把列表重新隐藏。
         iconListAnimator=null;
         FileLogger.d(TAG, "showIconList, cancelled pending hide animation.");
         Log.d(TAG, "showIconList, cancelled pending hide animation."); //Debug.
       } //if (iconListAnimator!=null)
-
-      iconListDisplayMode=IconListDisplayMode.ICON_LIST;
-
+      iconListDisplayMode=IconListDisplayMode.ICON_LIST; //记录，当前处于图标列表模式。
       mRecyclerView.setVisibility(View.VISIBLE);
 
       mRecyclerView.setRotationY(-30);
@@ -1387,6 +1378,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
       FileLogger.d(TAG, "showIconList, switched to ICON_LIST mode.");
       Log.d(TAG, "showIconList, switched to ICON_LIST mode."); //Debug.
+      
       gridIcon.setVisibility(View.GONE);
     } //private void showIconList()
 
@@ -2217,24 +2209,24 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
     private void hideIconList()
     {
       Log.d(TAG, CodePosition.newInstance().toString()); // Debug.
+      iconListDisplayMode=IconListDisplayMode.VOICE_RECOGNITION; //记录，当前处于语音识别模式。
+      if (iconListAnimator!=null) //有尚未完成的动画，先取消掉。
+      {
+        iconListAnimator.cancel(); //取消掉未完成的显示动画。
+        iconListAnimator=null;
+        FileLogger.d(TAG, "hideIconList, cancelled pending show animation.");
+        Log.d(TAG, "hideIconList, cancelled pending show animation."); //Debug.
+      } //if (iconListAnimator!=null)
       if (mRecyclerView!=null)
       {
-        // 取消尚未完成的显示动画，避免两个动画互相打断。
-        if (iconListAnimator!=null)
-        {
-          iconListAnimator.cancel();
-          iconListAnimator=null;
-          FileLogger.d(TAG, "hideIconList, cancelled pending show animation.");
-          Log.d(TAG, "hideIconList, cancelled pending show animation."); //Debug.
-        } //if (iconListAnimator!=null)
-
-        iconListDisplayMode=IconListDisplayMode.VOICE_RECOGNITION;
-
         iconListAnimator=mRecyclerView.animate().rotationX(-30).rotationY(-30).withEndAction(hideIconLitRunnalbe);
         iconListAnimator.start();
+      }  //if (mRecyclerView!=null)
+      
+      gridIcon.setVisibility(View.VISIBLE); // Show the grid icon.
 
-        FileLogger.d(TAG, "hideIconList, switched to VOICE_RECOGNITION mode.");
-        Log.d(TAG, "hideIconList, switched to VOICE_RECOGNITION mode."); //Debug.
+      FileLogger.d(TAG, "hideIconList, switched to VOICE_RECOGNITION mode.");
+      Log.d(TAG, "hideIconList, switched to VOICE_RECOGNITION mode."); //Debug.
     } //private void hideIconList()
 
     Runnable hideIconLitRunnalbe=new Runnable() 
