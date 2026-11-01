@@ -184,7 +184,7 @@ public class FileLogger {
             String dateStr = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
             // ✅ 修复：添加 HHmmss 时间戳确保文件名唯一
             String timeStr = new SimpleDateFormat("HHmmss", Locale.getDefault()).format(new Date());
-            String logFileName = "sisterfuture_" + dateStr + "_" + timeStr + ".log";
+            String logFileName = "hxlauncher_" + dateStr + "_" + timeStr + ".log";
             currentLogFile = new File(LOG_DIR + logFileName);
             
             if (currentLogFile.exists()) {
@@ -212,7 +212,7 @@ public class FileLogger {
                 return;
             }
             
-            File[] logFiles = logDir.listFiles((dir, name) -> name.startsWith("sisterfuture_") && name.endsWith(".log"));
+            File[] logFiles = logDir.listFiles((dir, name) -> name.startsWith("hxlauncher_") && name.endsWith(".log"));
             if (logFiles == null || logFiles.length == 0) {
                 return;
             }
