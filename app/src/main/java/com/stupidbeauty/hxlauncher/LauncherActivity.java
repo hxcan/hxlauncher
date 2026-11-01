@@ -3245,7 +3245,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
     /**
     * 启动应用。
     * @param launchIntent 启动用的意图。
-    *\//
+    */
     public boolean launchApplication(Intent launchIntent)
     {
       // 启动决策统一交给 LaunchManager 处理。
@@ -3257,7 +3257,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
     /**
     * 获取启动管理器。
     * @return 启动管理器。
-    *\//
+    */
     private LaunchManager getLaunchManager()
     {
       if (launchManager==null) //!< 尚未创建。
