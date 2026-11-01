@@ -320,11 +320,11 @@ public class LaunchManager
    * 实际按包名启动应用程序。不回调 launch()，避免与 launch() 形成无限递归。
    * @param packageName 包名。
    * @return 是否启动成功。
-   *\//
+   */
   private boolean doLaunchApplicationByPackageName(String packageName)
   {
     boolean result=false; //!<启动结果。
-    boolean result=false; //启动结果。
+
 
     PackageManager packageManager=context.getPackageManager(); //获取软件包管理器。
 
