@@ -1344,7 +1344,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
      */
     private void showIconList()
     {
-      Log.d(TAG, CodePosition.newInstance().toString()); // Debug.
+      FileLogger.d(TAG, "showIconList, caller: " + Log.getStackTraceString(new Throwable()));
       if (iconListDisplayMode==IconListDisplayMode.ICON_LIST) //已经在图标列表模式，不重复播放动画。
       {
         FileLogger.d(TAG, "showIconList, already in ICON_LIST mode, skip redundant animation.");
@@ -2208,7 +2208,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
      */
     private void hideIconList()
     {
-      Log.d(TAG, CodePosition.newInstance().toString()); // Debug.
+      FileLogger.d(TAG, "hideIconList, caller: " + Log.getStackTraceString(new Throwable()));
       iconListDisplayMode=IconListDisplayMode.VOICE_RECOGNITION; //记录，当前处于语音识别模式。
       if (iconListAnimator!=null) //有尚未完成的动画，先取消掉。
       {
