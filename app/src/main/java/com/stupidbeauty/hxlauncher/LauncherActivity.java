@@ -52,6 +52,7 @@ import android.net.Uri;
 import com.stupidbeauty.hxlauncher.manager.ActiveUserReportManager;
 import com.stupidbeauty.hxlauncher.manager.PackageInformationManager;
 import com.stupidbeauty.hxlauncher.manager.NotificationControlManager;
+import com.stupidbeauty.hxlauncher.manager.LaunchManager;
 import com.stupidbeauty.hxlauncher.interfaces.ShutDownAt2100LogicInterface;
 import com.stupidbeauty.hxlauncher.asynctask.LoadBuiltinVoicePackageNameMapTask;
 import com.stupidbeauty.hxlauncher.asynctask.BuildActivityLabelPackageItemInfoMapTask;
@@ -240,6 +241,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
   private Stack<VoiceCommandHitDataObject> voiceCommandHitDataStack=new Stack<>(); //!<语音命中数据记录栈
   private BuiltinShortcutsManager builtinShortcutsManager=new BuiltinShortcutsManager(); //!<内置快捷方式管理器
   private ShutDownAt2100Logic shutDownAt2100Logic= null; //!< Logic with shutdownat2100.
+  private LaunchManager launchManager=null; //!< 启动管理器。统一管理应用启动决策。
   @BindView(R.id.hitApplicationIcon) ImageView hitApplicationIcon; //!<命中的应用的图标。
   @BindView(R.id.gridIcon) ImageView gridIcon; //!< The grid icon.
   @BindView(R.id.launcher_activity) RelativeLayout launcher_activity; //!<整个启动活动
@@ -3241,70 +3243,44 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
     } //public void launchShortcut(ShortcutInfo shortcutInfo)
 
     /**
-     * 启动应用。
-     * @param launchIntent 启动用的意图。
-     */
+    * 启动应用。
+    * @param launchIntent 启动用的意图。
+    */
     public boolean launchApplication(Intent launchIntent)
     {
-      HxLauncherApplication hxLauncherApplication = HxLauncherApplication.getInstance(); //获取应用程序对象。
-      boolean result=false; //结果
+      // 启动决策统一交给 LaunchManager 处理。
+      // 21点关机黑名单检查前置于「是否跳转到解锁页」的决策，
+      // 防止被加了应用锁的应用绕过黑名单限制。
+      return getLaunchManager().launch(launchIntent);
+    } //public boolean launchApplication(Intent launchIntent)
 
-      try //尝试启动活动，并且捕获可能的异常。
+    /**
+    * 获取启动管理器。
+    * @return 启动管理器。
+    */
+    private LaunchManager getLaunchManager()
+    {
+      if (launchManager==null) //!< 尚未创建。
       {
-        if (launchIntent!=null) //启动意图存在。
+        launchManager=new LaunchManager(this, shutDownAt2100Logic)
         {
-          boolean allowedToLaunch = hxLauncherApplication.checkLaunchCoolDownTime(launchIntent); //检查启动的冷却时间。
-
-          if (allowedToLaunch) //允许启动。
+          @Override
+          protected String getVoiceRecognizeResult()
           {
-            checkAndAquireWakeLock(launchIntent); //检查并获取唤醒锁。
+            return LauncherActivity.this.voiceRecognizeResultString; //!< 当前语音识别结果。
+          } //protected String getVoiceRecognizeResult()
 
-            PackageInformationManager packageInformatinManager = new PackageInformationManager(); // The package information manager.
-            // boolean installed = packageInformatinManager.checkInstalled(packageName); // 检查该应用是不是已经安装了。
-            boolean exported =  packageInformatinManager.checkExported(launchIntent); //检查该个活动是否被导出了。
+          @Override
+          protected void onBlocked(LaunchManager.LaunchDecision decision)
+          {
+            Log.d(TAG, "launchApplication, blocked by blacklist: " + decision.packageName);
+            Toast.makeText(LauncherActivity.this, "当前时段不允许启动 " + decision.packageName, Toast.LENGTH_SHORT).show();
+          } //protected void onBlocked(LaunchManager.LaunchDecision decision)
+        }; //!< 创建启动管理器。
+      } //!<if (launchManager==null)
 
-            String packageName=launchIntent.getComponent().getPackageName(); //获取包名。
-            
-            boolean applicationLocked=checkApplicationLocked(launchIntent); // 检查该应用是不是被锁住了。
-            
-            if (exported) //是导出了。
-            {
-              if (applicationLocked) // 应用被加锁。
-              {
-                gotoApplicationUnlockActivity(launchIntent); // 跳转到应用程序解锁活动。
-              }
-              else // 应用未被加锁。
-              {
-                launchIntent.putExtra( Constants.Fields.VoiceRecognizeResult, voiceRecognizeResultString ); // SEt the voice recognize result.
-                assessExcludeFromRecentActivities(launchIntent); // Assess to exclude from recent activites.
-              
-                startActivity(launchIntent); //启动活动。
-              } // else // 应用未被加锁。
-            } //if (exported) //是导出了。e
-            else //未导出。启动该应用的默认活动。
-            {
-              launchApplicationByPackageName(packageName); //按照包名启动。
-            } //else //未导出。
-
-            hxLauncherApplication.rememberLaunchTimestamp(launchIntent); //记录启动时间戳。
-          } //if (allowedToLaunch) //允许启动。
-        } //                    if (launchIntent!=null) //启动意图存在。
-
-        result=true; //启动成功
-
-        hideIconList(); //隐藏图标列表
-      } //try //尝试启动活动，并且捕获可能的异常。
-      catch (ActivityNotFoundException exception)
-      {
-        exception.printStackTrace(); //报告错误。
-      } //catch (ActivityNotFoundException exception)
-      catch (SecurityException exception) //安全异常。
-      {
-        exception.printStackTrace(); //报告错误。
-      } //catch (SecurityException exception) //安全异常。
-
-      return result;
-    } //private void launchApplication(Intent launchIntent)
+      return launchManager;
+    } //private LaunchManager getLaunchManager()
     
     /**
     * Assess to exclude from recent activites.

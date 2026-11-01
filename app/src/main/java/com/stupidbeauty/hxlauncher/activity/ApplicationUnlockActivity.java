@@ -85,6 +85,9 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import com.stupidbeauty.hxlauncher.application.HxLauncherApplication;
+import com.stupidbeauty.hxlauncher.logic.ShutDownAt2100Logic;
+import com.stupidbeauty.hxlauncher.manager.LaunchManager;
+import com.stupidbeauty.hxlauncher.interfaces.ShutDownAt2100LogicInterface;
 import com.stupidbeauty.hxlauncher.asynctask.VoiceAssociationDataSendTask;
 import com.stupidbeauty.hxlauncher.asynctask.VoiceShortcutAssociationDataSendTask;
 import com.stupidbeauty.hxlauncher.bean.ApplicationNameInternationalizationData;
@@ -166,6 +169,22 @@ public class ApplicationUnlockActivity extends Activity
 
   private String packagename; //!< 包名。陈欣。
   private String activityName; //!< 活动名字。
+  private ShutDownAt2100Logic shutDownAt2100Logic=null; //!< 21点关机逻辑。用于解锁后的黑名单二次校验。
+  private LaunchManager launchManager=null; //!< 启动管理器。
+
+  /**
+   * ShutDownAt2100LogicInterface 的桩实现。
+   * 解锁页面不需要触发 APK 下载流程（那是 LauncherActivity 的事），这里只需要黑名单判定。
+   * 参考 NotificationListernService02 中的 ServiceShutDownAt2100LogicInterface 做法。
+   */
+  private static class UnlockShutDownAt2100LogicInterface implements ShutDownAt2100LogicInterface
+  {
+    @Override
+    public boolean requestDownloadApk(String foundPackageName)
+    {
+      return false; //!< 在解锁页面上下文中不触发 APK 下载。
+    }
+  } //private static class UnlockShutDownAt2100LogicInterface
 
   private int mCurrMsg = -1;
 
@@ -178,6 +197,18 @@ public class ApplicationUnlockActivity extends Activity
     
     if (password.equals(Constants.Literal.PASSWORD_CX)) // 密码正确。
     {
+      // 解锁后二次校验黑名单。防止用户在受限窗口内打开解锁页，等待窗口期结束后再启动。
+      if (launchManager!=null)
+      {
+        LaunchManager.LaunchDecision decision=launchManager.decideLaunch(packagename);
+        if (!decision.allowed) //!< 仍在黑名单受限窗口内。
+        {
+          Log.d(TAG, "unlockAndLaunch, blocked by blacklist: " + packagename);
+          Toast.makeText(this, "当前时段不允许启动 " + packagename, Toast.LENGTH_SHORT).show();
+          return; //!< 不启动。
+        }
+      }
+
       Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
       mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
 
@@ -230,6 +261,10 @@ public class ApplicationUnlockActivity extends Activity
 
       mHeaderImageView = findViewById(R.id.applicationIconrightimageView2);
       mHeaderTitle = findViewById(R.id.rightTextoperationMethodactTitletextView2);
+
+      // 初始化 21 点关机逻辑与启动管理器，用于解锁后的黑名单二次校验。
+      shutDownAt2100Logic=new ShutDownAt2100Logic(new UnlockShutDownAt2100LogicInterface());
+      launchManager=new LaunchManager(this, shutDownAt2100Logic);
 
       Intent intent=getIntent(); // 获取意图。
 
