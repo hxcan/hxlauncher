@@ -1328,18 +1328,56 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
         cancelRecognize(); //取消识别。
     } //public void onBackPressed()
 
+  private enum IconListDisplayMode
+  {
+    ICON_LIST, //!< 当前显示图标列表。
+    VOICE_RECOGNITION //!< 当前处于语音识别模式，图标列表正在隐藏。
+  } //private enum IconListDisplayMode
+
+  private IconListDisplayMode iconListDisplayMode=IconListDisplayMode.ICON_LIST; //!< 当前图标列表显示模式。
+  private android.view.ViewPropertyAnimator iconListAnimator=null; //!< 当前正在运行的图标列表动画。用于打断时清理。
+
+
+
     /**
      * 显示图标列表
      */
     private void showIconList()
     {
       Log.d(TAG, CodePosition.newInstance().toString()); // Debug.
+      if (iconListDisplayMode==IconListDisplayMode.ICON_LIST) //已经在图标列表模式，不重复播放动画。
+      {
+        FileLogger.d(TAG, "showIconList, already in ICON_LIST mode, skip redundant animation.");
+        Log.d(TAG, "showIconList, already in ICON_LIST mode, skip redundant animation."); //Debug.
+        gridIcon.setVisibility(View.GONE);
+        return;
+      } //if (iconListDisplayMode==IconListDisplayMode.ICON_LIST)
+      if (iconListAnimator!=null) //有尚未完成的动画，先取消掉。
+      {
+        iconListAnimator.cancel(); //取消掉未完成的隐藏动画，其 endAction 不会再把列表重新隐藏。
+        iconListAnimator=null;
+        FileLogger.d(TAG, "showIconList, cancelled pending hide animation.");
+        Log.d(TAG, "showIconList, cancelled pending hide animation."); //Debug.
+      } //if (iconListAnimator!=null)
+      iconListDisplayMode=IconListDisplayMode.ICON_LIST; //记录，当前处于图标列表模式。
       mRecyclerView.setVisibility(View.VISIBLE);
 
       mRecyclerView.setRotationY(-30);
       mRecyclerView.setRotationX(-30);
 
-      mRecyclerView.animate().rotationY(0).rotationX(0).start();
+      iconListAnimator=mRecyclerView.animate().rotationY(0).rotationX(0).withEndAction(new Runnable()
+      {
+        @Override
+        public void run()
+        {
+          iconListAnimator=null;
+          FileLogger.d(TAG, "showIconList, show animation finished.");
+        }
+      });
+      iconListAnimator.start();
+
+      FileLogger.d(TAG, "showIconList, switched to ICON_LIST mode.");
+      Log.d(TAG, "showIconList, switched to ICON_LIST mode."); //Debug.
       
       gridIcon.setVisibility(View.GONE);
     } //private void showIconList()
@@ -2171,12 +2209,24 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
     private void hideIconList()
     {
       Log.d(TAG, CodePosition.newInstance().toString()); // Debug.
+      iconListDisplayMode=IconListDisplayMode.VOICE_RECOGNITION; //记录，当前处于语音识别模式。
+      if (iconListAnimator!=null) //有尚未完成的动画，先取消掉。
+      {
+        iconListAnimator.cancel(); //取消掉未完成的显示动画。
+        iconListAnimator=null;
+        FileLogger.d(TAG, "hideIconList, cancelled pending show animation.");
+        Log.d(TAG, "hideIconList, cancelled pending show animation."); //Debug.
+      } //if (iconListAnimator!=null)
       if (mRecyclerView!=null)
       {
-        mRecyclerView.animate().rotationX(-30).rotationY(-30).withEndAction(hideIconLitRunnalbe).start();
+        iconListAnimator=mRecyclerView.animate().rotationX(-30).rotationY(-30).withEndAction(hideIconLitRunnalbe);
+        iconListAnimator.start();
       }  //if (mRecyclerView!=null)
       
       gridIcon.setVisibility(View.VISIBLE); // Show the grid icon.
+
+      FileLogger.d(TAG, "hideIconList, switched to VOICE_RECOGNITION mode.");
+      Log.d(TAG, "hideIconList, switched to VOICE_RECOGNITION mode."); //Debug.
     } //private void hideIconList()
 
     Runnable hideIconLitRunnalbe=new Runnable() 
