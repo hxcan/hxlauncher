@@ -176,7 +176,7 @@ public class ApplicationUnlockActivity extends Activity
    * ShutDownAt2100LogicInterface 的桩实现。
    * 解锁页面不需要触发 APK 下载流程（那是 LauncherActivity 的事），这里只需要黑名单判定。
    * 参考 NotificationListernService02 中的 ServiceShutDownAt2100LogicInterface 做法。
-   *\//
+   */
   private static class UnlockShutDownAt2100LogicInterface implements ShutDownAt2100LogicInterface
   {
     @Override
