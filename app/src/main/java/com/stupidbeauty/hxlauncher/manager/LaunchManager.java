@@ -42,6 +42,7 @@ public class LaunchManager
 
   private final Context context; //!< 上下文。
   private final ShutDownAt2100Logic shutDownAt2100Logic; //!< 21点关机逻辑。
+  private boolean launchingByPackageName=false; //!< 防重入标记。避免 launch() 与 launchApplicationByPackageName() 之间形成无限递归。
 
   public LaunchManager(Context context, ShutDownAt2100Logic shutDownAt2100Logic)
   {
@@ -298,6 +299,31 @@ public class LaunchManager
    */
   public boolean launchApplicationByPackageName(String packageName)
   {
+    if (launchingByPackageName) //!< 防重入。避免 launch() -> launchApplicationByPackageName() -> launch() 无限递归。
+    {
+      Log.d(TAG, "launchApplicationByPackageName, already in progress, skip: " + packageName); //!<Debug.
+      return false;
+    } //!<if (launchingByPackageName)
+
+    launchingByPackageName=true; //!< 标记已进入按包名启动的路径。
+    try
+    {
+      return doLaunchApplicationByPackageName(packageName);
+    }
+    finally
+    {
+      launchingByPackageName=false; //!< 退出保护。
+    }
+  } //!<public boolean launchApplicationByPackageName(String packageName)
+
+  /**
+   * 实际按包名启动应用程序。不回调 launch()，避免与 launch() 形成无限递归。
+   * @param packageName 包名。
+   * @return 是否启动成功。
+   *\//
+  private boolean doLaunchApplicationByPackageName(String packageName)
+  {
+    boolean result=false; //!<启动结果。
     boolean result=false; //启动结果。
 
     PackageManager packageManager=context.getPackageManager(); //获取软件包管理器。
@@ -308,7 +334,11 @@ public class LaunchManager
     {
       try //尝试启动活动，并且捕获可能的异常。
       {
-        result=launch(launchIntent); //启动活动。
+        // 此处直接启动，不回调 launch()。避免 launch() -> launchApplicationByPackageName() -> launch() 无限递归。
+        launchIntent.putExtra(Constants.Fields.VoiceRecognizeResult, getVoiceRecognizeResult()); //设置语音识别结果。
+        assessExcludeFromRecentActivities(launchIntent); //判断要不要从最近任务列表中排除。
+        context.startActivity(launchIntent); //启动活动。
+        result=true; //启动成功。
       } //try 尝试启动活动，并且捕获可能的异常。
       catch (ActivityNotFoundException exception)
       {
