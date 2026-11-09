@@ -118,7 +118,14 @@ public class LoadShortcutsTask extends AsyncTask<Object, Void, Object>
         {
           shortcutInfos=launcherApps.getShortcuts(shortcutQuery, Process.myUserHandle()); //查询钉住的快捷方式。
 
-          Log.d(TAG, "loadShortcuts, short cut list size: " + shortcutInfos.size()); //Debug.
+          if (shortcutInfos!=null) //快捷方式列表存在。本桌面不是默认桌面时，可能查询不到。
+          {
+            Log.d(TAG, "loadShortcuts, short cut list size: " + shortcutInfos.size()); //Debug.
+          } //if (shortcutInfos!=null) //快捷方式列表存在。
+          else
+          {
+            Log.d(TAG, "loadShortcuts, short cut list is null. Launcher may not be the default home app."); //Debug.
+          }
 
                  if (shortcutInfos != null && !shortcutInfos.isEmpty()) {
                 for (ShortcutInfo shortcutInfo : shortcutInfos) {
