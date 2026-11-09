@@ -3108,7 +3108,6 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
       return result;
     } //private boolean findVoiceTargetMapShortcutAndLaunch(HashMap<String, HxShortcutInfo> voiceShortcutIdMap)
-    } //private boolean findVoiceTargetMapShortcutAndLaunch(HashMap<String, HxShortcutInfo> voiceShortcutIdMap)
 
     /**
      * 记录语音识别命中应用的数据
