@@ -975,13 +975,15 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
     */
   public void buildShortcutTitleInfoMap(List<ShortcutInfo> shortcutInfos)
   {
+    shortcutTitleInfoMap=new HashMap<>(); //创建映射。无条件初始化，避免非默认桌面读不到快捷方式列表时映射保持为null。
+    shortcutIdInfoMap=new HashMap<>(); //创建映射。无条件初始化，避免非默认桌面读不到快捷方式列表时映射保持为null。
+
     if (shortcutInfos != null) // The list exists
     {
       if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) //26 之后才有钉住的快捷方式。
       {
         shortcutTitleInfoMap=new HashMap<>(); //创建映射。
         shortcutIdInfoMap=new HashMap<>(); //创建映射。
-
         for(ShortcutInfo shortcutInfo: shortcutInfos) //一个个地显示。
         {
           String title = shortcutInfo.getShortLabel().toString(); //获取标题。
@@ -3029,16 +3031,42 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
       
       if (voiceShortcutIdMap!=null) // The map exists. Loaded.
       {
-        if (voiceShortcutIdMap.containsKey(voiceRecognizeResultString)) //有对应的映射关系。用户自己积累的语音指令与包条目映射。
-        {
-          String packageName=voiceShortcutIdMap.get(voiceRecognizeResultString).packageName; //获取包名。
-          String activityName=voiceShortcutIdMap.get(voiceRecognizeResultString).shortcutId; //获取快捷方式编号。
+        HxShortcutInfo hxShortcutInfo=voiceShortcutIdMap.get(voiceRecognizeResultString); //获取快捷方式对象。
 
-          result=true; //命中了。
+        if (hxShortcutInfo!=null) //有对应的映射关系。用户自己积累的语音指令与包条目映射。
+        {
+          String packageName=hxShortcutInfo.packageName; //获取包名。
+          String activityName=hxShortcutInfo.shortcutId; //获取快捷方式编号。
+
+          Log.d(TAG, "findVoiceTargetMapShortcutAndLaunch, package name: " + packageName + ", shortcut id: " + activityName); //Debug.
+
+          if (packageName==null || packageName.isEmpty()) //判断不出应用包名。彻底降级：让用户自己手点。
+          {
+            Log.d(TAG, "findVoiceTargetMapShortcutAndLaunch, no package name, degrade to manual tap."); //Debug.
+
+            processEventVoiceLaunchFailed(); //降级：让用户自己手点。
+
+            return false; //没有命中。
+          } //if (packageName==null || packageName.isEmpty())
 
           scrollToIconPosition(packageName, activityName); //滚动到图标所在的位置。
 
-          showHitShortCut(packageName, activityName); //显示命中了快捷方式的图标。
+          boolean shortcutShown=showHitShortCut(packageName, activityName); //显示命中了快捷方式的图标。
+
+          if (!shortcutShown) //读不到快捷方式对象。通常是因为本桌面不是默认桌面，LauncherApps 查询不到快捷方式列表。
+          {
+            Log.d(TAG, "findVoiceTargetMapShortcutAndLaunch, shortcut info not available, degrade to launch application itself: " + packageName); //Debug.
+
+            showHitApplication(packageName); //显示命中了应用的图标。
+
+            result=launchApplicationByPackageName(packageName); //降级：直接启动对应应用本身。
+
+            rememberVoiceCommandHitData(voiceRecognizeResultString, packageName, activityName, ActivityIconType, LocalVoiceCommandMap); //记录语音识别命中应用的数据
+
+            return result; //返回启动结果。
+          } //if (!shortcutShown)
+
+          result=true; //命中了。
 
           rememberVoiceCommandHitData(voiceRecognizeResultString, packageName, activityName, ShortcutIconType, LocalVoiceCommandMap); //记录语音识别命中应用的数据
 
@@ -3066,7 +3094,7 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
 
             List<ShortcutInfo> shortcutInfos=launcherApps.getShortcuts(query, Process.myUserHandle()); //获取快捷方式列表．
 
-            if (shortcutInfos.size()>0) //有快捷方式。
+            if (shortcutInfos!=null && shortcutInfos.size()>0) //有快捷方式。
             {
               ShortcutInfo shortcutInfo=shortcutInfos.get(0); //获取第一个快捷方式信息．
 
@@ -3075,10 +3103,11 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
               voiceCommandHitDataReporter.reportVoiceCommandHitData(voiceRecognizeResultString, packageName, activityName, recordSoundFilePath, ShortcutIconType, shortcutTitle); // Report voice command hit data. Hit short cut.
             } //if (shortcutInfos.size()) //有快捷方式。
           } //if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.N_MR1) //25 之后才有快捷方式编号。
-        } //if (voicePackageNameMap.contains(voiceRecognizeResultString)) //有对应的映射关系。
+        } //if (hxShortcutInfo!=null) //有对应的映射关系。
       } // if (voiceShortcutIdMap!=null) // The map exists. Loaded.
 
       return result;
+    } //private boolean findVoiceTargetMapShortcutAndLaunch(HashMap<String, HxShortcutInfo> voiceShortcutIdMap)
     } //private boolean findVoiceTargetMapShortcutAndLaunch(HashMap<String, HxShortcutInfo> voiceShortcutIdMap)
 
     /**
