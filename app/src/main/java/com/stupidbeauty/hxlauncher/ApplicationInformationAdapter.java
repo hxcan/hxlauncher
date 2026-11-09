@@ -685,6 +685,26 @@ public class ApplicationInformationAdapter extends RecyclerView.Adapter<Applicat
 
         return null;
     } //private Drawable getShortcutIconDrawable(LauncherApps launcherApps, ShortcutInfo shortcutInfo)
+        if (launcherApps==null || shortcutInfo==null) //参数无效。
+        {
+            return null;
+        } //if (launcherApps==null || shortcutInfo==null)
+
+        try
+        {
+            return launcherApps.getShortcutIconDrawable(shortcutInfo, 0); //获取图标。
+        }
+        catch (SecurityException exception) //本桌面不是默认桌面时，没有快捷方式访问权限。
+        {
+            Log.d(TAG, "getShortcutIconDrawable, no shortcut permission: " + exception.getMessage()); //Debug.
+        } //catch (SecurityException exception)
+        catch (RuntimeException exception) //其它运行时异常。
+        {
+            Log.d(TAG, "getShortcutIconDrawable, failed: " + exception.getMessage()); //Debug.
+        } //catch (RuntimeException exception)
+
+        return null;
+    } //private Drawable getShortcutIconDrawable(LauncherApps launcherApps, ShortcutInfo shortcutInfo)
 
     /**
      * 获取快捷方式的短标题，带异常保护。
