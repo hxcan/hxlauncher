@@ -421,9 +421,9 @@ public class ApplicationInformationAdapter extends RecyclerView.Adapter<Applicat
 
           ShortcutInfo shortcutInfo=shortcutInfoListManager.getShortcut(shortcutInfoIndex); //获取对应位置的快捷方式。
 
-          String articleTitle=shortcutInfo.getShortLabel().toString(); //获取文章标题。
+          String articleTitle=getShortcutShortLabel(shortcutInfo); //获取文章标题。内部做了异常保护。
 
-          Drawable applicationIcon=launcherApps.getShortcutIconDrawable(shortcutInfo, 0); //获取图标。
+          Drawable applicationIcon=getShortcutIconDrawable(launcherApps, shortcutInfo); //获取图标。内部做了异常保护。
 
           holder.mTextView.setText(articleTitle); //设置新的文字内容。
         holder.voiceAssistantLayout.setVisibility(View.INVISIBLE);
@@ -431,7 +431,7 @@ public class ApplicationInformationAdapter extends RecyclerView.Adapter<Applicat
           Glide.with(context).load("").placeholder(applicationIcon).into(holder.applicationIconrightimageView2); //显示图标。
 
           holder.packageName=shortcutInfo.getPackage(); //获取包名。
-          holder.activityName=shortcutInfo.getActivity().getClassName(); //获取活动名字。
+          holder.activityName=getShortcutActivityName(shortcutInfo); //获取活动名字。内部做了异常保护。
           holder.iconType=ShortcutIconType; //类型是快捷方式。
           holder.shortcutInfo=shortcutInfo; //记录快捷方式。
         } //if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) //26之后才有钉住快捷方式的接口。
@@ -651,6 +651,112 @@ public class ApplicationInformationAdapter extends RecyclerView.Adapter<Applicat
         } //if (internationalizationName!=null) //有国际化名字。
       } //if (internationalizationData!=null) //数据存在。
     } //private void checkAndShowInternationalizationName(ArticleInfo articleInfo,  ClipViewHolder holder)
+
+    /**
+     * 获取快捷方式的图标，带异常保护。
+     *
+     * <p>本桌面不是默认桌面时，系统 LauncherAppsService 会校验快捷方式访问权限，
+     * 调用 getShortcutIconDrawable 会抛出 SecurityException。此时返回 null，
+     * 由调用方使用占位图标兜底，不中断绑定流程。</p>
+     *
+     * @param launcherApps 启动器应用对象。
+     * @param shortcutInfo 快捷方式信息对象。
+     * @return 快捷方式图标。获取失败时返回 null。
+     *\//
+    private Drawable getShortcutIconDrawable(LauncherApps launcherApps, ShortcutInfo shortcutInfo)
+    {
+        if (launcherApps==null || shortcutInfo==null) //参数无效。
+        {
+            return null;
+        } //if (launcherApps==null || shortcutInfo==null)
+
+        try
+        {
+            return launcherApps.getShortcutIconDrawable(shortcutInfo, 0); //获取图标。
+        }
+        catch (SecurityException exception) //本桌面不是默认桌面时，没有快捷方式访问权限。
+        {
+            Log.d(TAG, "getShortcutIconDrawable, no shortcut permission: " + exception.getMessage()); //Debug.
+        } //catch (SecurityException exception)
+        catch (RuntimeException exception) //其它运行时异常。
+        {
+            Log.d(TAG, "getShortcutIconDrawable, failed: " + exception.getMessage()); //Debug.
+        } //catch (RuntimeException exception)
+
+        return null;
+    } //private Drawable getShortcutIconDrawable(LauncherApps launcherApps, ShortcutInfo shortcutInfo)
+
+    /**
+     * 获取快捷方式的短标题，带异常保护。
+     *
+     * @param shortcutInfo 快捷方式信息对象。
+     * @return 快捷方式的短标题。获取失败时返回空字符串。
+     *\//
+    private String getShortcutShortLabel(ShortcutInfo shortcutInfo)
+    {
+        if (shortcutInfo==null) //参数无效。
+        {
+            return "";
+        } //if (shortcutInfo==null)
+
+        try
+        {
+            CharSequence shortLabel=shortcutInfo.getShortLabel();
+
+            if (shortLabel==null) //标题为空。
+            {
+                return "";
+            } //if (shortLabel==null)
+
+            return shortLabel.toString();
+        }
+        catch (SecurityException exception) //本桌面不是默认桌面时，没有快捷方式访问权限。
+        {
+            Log.d(TAG, "getShortcutShortLabel, no shortcut permission: " + exception.getMessage()); //Debug.
+        } //catch (SecurityException exception)
+        catch (RuntimeException exception) //其它运行时异常。
+        {
+            Log.d(TAG, "getShortcutShortLabel, failed: " + exception.getMessage()); //Debug.
+        } //catch (RuntimeException exception)
+
+        return "";
+    } //private String getShortcutShortLabel(ShortcutInfo shortcutInfo)
+
+    /**
+     * 获取快捷方式对应的活动类名，带异常保护。
+     *
+     * @param shortcutInfo 快捷方式信息对象。
+     * @return 活动类名。获取失败时返回空字符串。
+     *\//
+    private String getShortcutActivityName(ShortcutInfo shortcutInfo)
+    {
+        if (shortcutInfo==null) //参数无效。
+        {
+            return "";
+        } //if (shortcutInfo==null)
+
+        try
+        {
+            android.content.pm.ComponentName componentName=shortcutInfo.getActivity();
+
+            if (componentName==null) //活动不存在。
+            {
+                return "";
+            } //if (componentName==null)
+
+            return componentName.getClassName();
+        }
+        catch (SecurityException exception) //本桌面不是默认桌面时，没有快捷方式访问权限。
+        {
+            Log.d(TAG, "getShortcutActivityName, no shortcut permission: " + exception.getMessage()); //Debug.
+        } //catch (SecurityException exception)
+        catch (RuntimeException exception) //其它运行时异常。
+        {
+            Log.d(TAG, "getShortcutActivityName, failed: " + exception.getMessage()); //Debug.
+        } //catch (RuntimeException exception)
+
+        return "";
+    } //private String getShortcutActivityName(ShortcutInfo shortcutInfo)
 
     /**
      * 获取由系统提供的应用程序图标。
