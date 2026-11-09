@@ -2622,26 +2622,44 @@ public class LauncherActivity extends Activity implements ShutDownAt2100LogicInt
     * @param packageName 包名
     * @param activityName 快捷方式编号
     */
-  private void showHitShortCut(String packageName, String activityName)
+  private boolean showHitShortCut(String packageName, String activityName)
   {
+      boolean result=false; //结果，是否成功显示了快捷方式图标。
+
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) //25 之后才有快捷方式
       {
           LauncherApps launcherApps=(LauncherApps)(getSystemService(Context.LAUNCHER_APPS_SERVICE));
 
-          ShortcutInfo shortcutInfo=shortcutIdInfoMap.get(activityName); //获取快捷方式对象
+          ShortcutInfo shortcutInfo=null; //获取快捷方式对象。映射可能为null。
+
+          if (shortcutIdInfoMap!=null) //映射存在。非默认桌面读不到快捷方式列表时，映射可能为空。
+          {
+            shortcutInfo=shortcutIdInfoMap.get(activityName);
+          } //if (shortcutIdInfoMap!=null)
 
           if (shortcutInfo!=null) //快捷方式信息对象存在
           {
-              String articleTitle=shortcutInfo.getShortLabel().toString(); //获取文章标题。
+              try
+              {
+                String articleTitle=shortcutInfo.getShortLabel().toString(); //获取文章标题。
 
-              Drawable applicationIcon=launcherApps.getShortcutIconDrawable(shortcutInfo, 0); //获取图标。
+                Drawable applicationIcon=launcherApps.getShortcutIconDrawable(shortcutInfo, 0); //获取图标。
 
-              hitApplicationIcon.setVisibility(View.VISIBLE);
-              hitApplicationIcon.setImageDrawable(applicationIcon); //显示图标。
+                hitApplicationIcon.setVisibility(View.VISIBLE);
+                hitApplicationIcon.setImageDrawable(applicationIcon); //显示图标。
 
-              animateHitApplication(); //动画旋转，命中应用。陈欣
+                animateHitApplication(); //动画旋转，命中应用。陈欣
+
+                result=true; //显示成功。
+              }
+              catch (Exception e)
+              {
+                Log.d(TAG, "showHitShortCut, failed to show shortcut icon: " + e.getMessage()); //Debug.
+              } //catch (Exception e)
           } //if (shortcutInfo!=null) //快捷方式信息对象存在
       } //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) //21 之后才有启动应用
+
+      return result;
   } //private void showHitShortCut(String packageName, String activityName)
 
   /**
