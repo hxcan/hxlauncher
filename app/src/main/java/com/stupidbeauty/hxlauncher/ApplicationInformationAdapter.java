@@ -737,7 +737,7 @@ public class ApplicationInformationAdapter extends RecyclerView.Adapter<Applicat
 
         try
         {
-            android.content.pm.ComponentName componentName=shortcutInfo.getActivity();
+            ComponentName componentName=shortcutInfo.getActivity();
 
             if (componentName==null) //活动不存在。
             {
